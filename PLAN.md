@@ -133,18 +133,18 @@ slate/
 ## 4. Vault compatibility rules
 
 - A vault = a folder. Non-`.md` files are listed but not indexed.
-- We **never** write into the vault except our own hidden settings folder
-  `.slate/` (one JSON file). No migration, no reformatting.
+- We **never** write into the vault beyond the user's own notes — Slate's own
+  settings live in the OS user-data directory, outside the vault. No
+  migration, no reformatting.
 - Reading is always UTF-8; writes preserve existing content byte-for-byte
   except the edited region. Save is atomic (write temp + rename) to avoid
   truncation on crash.
 - YAML frontmatter is parsed but **preserved verbatim** on write.
 - Files are identified by their **path relative to the vault root** (posix-style
   separators), which is stable across platforms.
-- Hidden files/folders (leading `.`) are hidden from the tree by default but
-  still indexed if they contain markdown? — **Decision: exclude dot-folders from
-  the tree, but still index their `.md` files** (matches Obsidian's "show hidden
-  files" toggle existing without forcing it on).
+- Dot-folders (leading `.`) are left alone entirely: excluded from the tree,
+  excluded from the index, and ignored by the watcher. An existing vault's
+  `.obsidian/` folder is never read or rewritten.
 
 ---
 

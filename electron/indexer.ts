@@ -18,7 +18,7 @@ import type {
   NoteMeta,
   TagInfo,
 } from '../src/shared/types.js'
-import { isMarkdown, toRelative } from './vault.js'
+import { listMarkdownFiles } from './vault.js'
 
 export interface IndexSnapshot {
   notes: NoteMeta[]
@@ -178,21 +178,7 @@ export class VaultIndexer extends EventEmitter {
   }
 
   private async listMarkdown(root: string): Promise<string[]> {
-    const out: string[] = []
-    const walk = async (dir: string): Promise<void> => {
-      const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => [])
-      for (const entry of entries) {
-        if (entry.name.startsWith('.')) continue
-        const abs = path.join(dir, entry.name)
-        if (entry.isDirectory()) {
-          await walk(abs)
-        } else if (isMarkdown(entry.name)) {
-          out.push(toRelative(root, abs))
-        }
-      }
-    }
-    await walk(root)
-    return out.sort()
+    return listMarkdownFiles(root)
   }
 
   // ---- Read accessors used by IPC ----

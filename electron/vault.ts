@@ -1,17 +1,14 @@
 /**
  * Vault: a folder of plain files. Slate treats it as read/write but never
- * migrates or reformats it. The only thing Slate ever writes inside a vault
- * is its own hidden settings folder (".slate/").
+ * migrates or reformats it.
+ *
+ * Slate's own settings are kept outside the vault entirely, in the OS
+ * user-data directory, so opening a vault never writes into it.
  */
 
 import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import type { TreeNode } from '../src/shared/types.js'
-
-/** The hidden folder Slate keeps inside a vault for its own settings. */
-export const SLATE_VAULT_DIR = '.slate'
-/** The hidden folder other apps (e.g. Obsidian) keep inside a vault. */
-export const FOREIGN_VAULT_DIRS = new Set(['.obsidian', '.trash', '.git'])
 
 export class VaultError extends Error {
   constructor(message: string, readonly code: string) {
@@ -46,8 +43,8 @@ export function isHidden(name: string): boolean {
 
 /**
  * Build the file tree for a vault.
- * Hidden folders are skipped, except Slate's own settings folder which the
- * caller may want to show.
+ * Hidden folders are skipped, so a vault's own dot-folders (e.g. ".obsidian")
+ * stay out of the way.
  */
 export async function readTree(root: string, includeHidden = false): Promise<TreeNode[]> {
   const entries = await safeReaddir(root)

@@ -187,8 +187,9 @@ to keep in sync.
 
 - A vault is a folder of plain `.md` files. Non-Markdown files are shown in the
   tree but not indexed.
-- Nothing is written into the vault except the app's own hidden settings
-  folder. App settings live in the OS user-data directory, outside the vault.
+- Nothing is written into the vault except the notes you edit. App settings
+  live in the OS user-data directory, outside the vault, and dot-folders
+  (including another app's `.obsidian/`) are left untouched.
 - Frontmatter is parsed but preserved verbatim on write.
 - Files are identified by their vault-relative path, with forward slashes on
   every platform.

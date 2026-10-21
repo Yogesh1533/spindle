@@ -2,8 +2,8 @@
  * App settings.
  *
  * Stored in Electron's userData directory — deliberately OUTSIDE the vault so
- * that opening a vault never writes into it. The only thing Slate writes
- * inside a vault is the hidden ".slate" folder (see vault.ts).
+ * that opening a vault never writes into it. Slate never adds a folder or a
+ * file of its own to a vault (see vault.ts).
  */
 
 import { promises as fs } from 'node:fs'

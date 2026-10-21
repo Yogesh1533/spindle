@@ -122,6 +122,19 @@ ws.onopen = async () => {
     await sleep(400)
     await evaluate(`window.slate.file.remove(${JSON.stringify(String(daily?.path ?? ''))}).catch(() => {})`)
     await sleep(600)
+    // The check created a "Journal" folder. Remove it too, but only once it
+    // is empty, so a folder the user made is never touched.
+    await evaluate(`
+      (async () => {
+        const tree = await window.slate.vault.tree()
+        const journal = tree.find((n) => n.name === 'Journal' && n.isFolder)
+        if (journal && (journal.children ?? []).length === 0) {
+          await window.slate.file.remove('Journal').catch(() => {})
+        }
+        return true
+      })()
+    `)
+    await sleep(400)
 
     // ---- 6. A template is used for new daily notes ----
     await evaluate(`window.slate.settings.set({ dailyNotesTemplate: 'Templates/Daily.md' })`)

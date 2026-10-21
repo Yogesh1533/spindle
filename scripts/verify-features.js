@@ -161,6 +161,18 @@
   await wait(1300)
   check('new note opens a tab', count('.tab') > tabCountBefore, `${tabCountBefore} → ${count('.tab')}`)
 
+  // Delete the note again, so repeated runs do not litter the sample vault
+  // with "Untitled 1.md", "Untitled 2.md" and so on.
+  const newTab = $('.tab.is-active .tab__name')?.textContent ?? ''
+  if (/^Untitled/.test(newTab)) {
+    const paths = await window.slate.links.allPaths()
+    const created = paths.find((p) => p.split('/').pop() === newTab)
+    if (created) {
+      await window.slate.file.remove(created).catch(() => {})
+      await wait(600)
+    }
+  }
+
   // ---- Status bar ----
   const status = $('.status-bar')?.textContent || ''
   check('status bar shows a word count', /\d+ words/.test(status), status.slice(0, 60))

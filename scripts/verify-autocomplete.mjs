@@ -160,6 +160,10 @@ ws.onopen = async () => {
       check('accepting a completion inserts a wikilink', /\[\[[^\]]+\]\]/.test(String(after)), JSON.stringify(after))
     }
 
+    // Remove the scratch note, so the sample vault is left as it was found.
+    await evaluate(`window.slate.file.remove('Scratch Autocomplete.md').catch(() => {})`)
+    await sleep(600)
+
     console.log(results.join('\n'))
     process.exit(0)
   } catch (err) {
