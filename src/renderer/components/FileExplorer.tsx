@@ -10,7 +10,7 @@ import {
   IconPlus,
   IconTrash,
 } from './icons.js'
-import { createNewNote, deletePath, renameNote } from '../lib/actions.js'
+import { createNewNote, deletePath, openInSplit, renameNote } from '../lib/actions.js'
 
 /** The file explorer sidebar. */
 export function FileExplorer() {
@@ -93,6 +93,7 @@ export function FileExplorer() {
                 renamingPath={renamingPath}
                 onToggle={toggleFolder}
                 onOpen={openTab}
+                onOpenInSplit={(path) => void openInSplit(path)}
                 onRename={handleRename}
                 onStartRename={setRenamingPath}
                 onDelete={deletePath}
@@ -113,6 +114,7 @@ interface ItemProps {
   renamingPath: string | null
   onToggle: (path: string) => void
   onOpen: (path: string) => void
+  onOpenInSplit: (path: string) => void
   onRename: (from: string, to: string) => void
   onStartRename: (path: string | null) => void
   onDelete: (path: string) => void
@@ -126,6 +128,7 @@ function TreeItem({
   renamingPath,
   onToggle,
   onOpen,
+  onOpenInSplit,
   onRename,
   onStartRename,
   onDelete,
@@ -139,7 +142,18 @@ function TreeItem({
       <div
         className={`tree__item ${node.isFolder ? 'is-folder' : ''} ${isActive ? 'is-active' : ''}`}
         style={{ paddingLeft: 10 + depth * 14 }}
-        onClick={() => (node.isFolder ? onToggle(node.path) : onOpen(node.path))}
+        onClick={(e) => {
+          if (node.isFolder) {
+            onToggle(node.path)
+            return
+          }
+          // Cmd/Ctrl-click opens the note in a split pane, to the right.
+          if (e.metaKey || e.ctrlKey) {
+            onOpenInSplit(node.path)
+            return
+          }
+          onOpen(node.path)
+        }}
       >
         {node.isFolder ? (
           <span className={`tree__twisty ${isOpen ? 'is-open' : ''}`}>
@@ -214,6 +228,7 @@ function TreeItem({
             renamingPath={renamingPath}
             onToggle={onToggle}
             onOpen={onOpen}
+            onOpenInSplit={onOpenInSplit}
             onRename={onRename}
             onStartRename={onStartRename}
             onDelete={onDelete}

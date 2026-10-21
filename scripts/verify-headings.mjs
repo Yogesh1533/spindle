@@ -72,6 +72,18 @@ ws.onopen = async () => {
     await evaluate(`window.slate.vault.open(${JSON.stringify(VAULT)})`)
     await sleep(2000)
 
+    // A previous check may have left the graph open, which hides the
+    // editor and the outline.
+    await evaluate(`
+      (() => {
+        const btn = [...document.querySelectorAll('.ribbon__button')]
+          .find((b) => /^Graph view/.test(b.getAttribute('title') || ''))
+        if (btn && btn.classList.contains('is-active')) btn.click()
+        return true
+      })()
+    `)
+    await sleep(600)
+
     // ---- 1. The outline pane lists the headings ----
     await evaluate(`
       (() => {
@@ -81,13 +93,15 @@ ws.onopen = async () => {
       })()
     `)
     await sleep(1500)
-    // The outline pane is a ribbon button.
+    // The outline pane is a ribbon button. Click it only when another pane
+    // is showing, so the check does not depend on what ran before.
     await evaluate(`
       (() => {
         const btn = [...document.querySelectorAll('.ribbon__button')]
           .find((b) => (b.getAttribute('title') || '') === 'Outline')
-        if (btn) btn.click()
-        return !!btn
+        if (!btn) return false
+        if (!btn.classList.contains('is-active')) btn.click()
+        return true
       })()
     `)
     await sleep(600)

@@ -24,6 +24,24 @@
   // ---- Open the vault ----
   await window.slate.vault.open('/Users/yogesh/Documents/Slate Sample Vault')
   await wait(1800)
+
+  // Start from a known state: a previous check may have left the graph
+  // open or a right-hand pane selected, and several of the shortcuts
+  // below toggle rather than set.
+  const ribbon = (title) =>
+    $$('.ribbon__button').find((b) => new RegExp(title).test(b.getAttribute('title') || ''))
+  const graphBtn = ribbon('^Graph view')
+  if (graphBtn && graphBtn.classList.contains('is-active')) graphBtn.click()
+  await wait(400)
+  for (const title of ['^Backlinks$', '^Tags$', '^Outline$', '^Outgoing links$']) {
+    const btn = ribbon(title)
+    if (btn) btn.click()
+    await wait(250)
+  }
+  const initialBacklinks = ribbon('^Backlinks$')
+  if (initialBacklinks) initialBacklinks.click()
+  await wait(500)
+
   check('vault opens, file tree renders', !!$('.tree'), 'no .tree')
 
   const treeNames = $$('.tree__name').map((e) => e.textContent)

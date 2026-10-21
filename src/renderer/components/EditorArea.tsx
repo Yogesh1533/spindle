@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useVaultStore } from '../store/useVaultStore.js'
 import { useEditorStore } from '../store/useEditorStore.js'
 import { NoteEditor } from '../editor/NoteEditor.js'
-import { loadNote, openLinkTarget, saveNote } from '../lib/actions.js'
+import { loadNote, openInSplit, openLinkTarget, saveNote } from '../lib/actions.js'
 import { basename } from '../../shared/markdown.js'
 import { IconFile, IconX } from './icons.js'
 
@@ -55,7 +55,14 @@ export function EditorArea() {
             key={tab.path}
             path={tab.path}
             active={tab.path === activeTab}
-            onClick={() => setActiveTab(tab.path)}
+            onClick={(e) => {
+              // Cmd/Ctrl-click moves the note into a split pane, to the right.
+              if (e.metaKey || e.ctrlKey) {
+                void openInSplit(tab.path)
+                return
+              }
+              setActiveTab(tab.path)
+            }}
             onClose={() => {
               void saveNote(tab.path)
               closeTab(tab.path)
@@ -115,7 +122,7 @@ function TabButton({
 }: {
   path: string
   active: boolean
-  onClick: () => void
+  onClick: (event: React.MouseEvent) => void
   onClose: () => void
   small?: boolean
 }) {

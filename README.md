@@ -224,7 +224,7 @@ observed and how confident we are about it are written up in
 - [x] Live preview — Markdown renders as you type
 - [x] Source-mode toggle (`Cmd+E`)
 - [x] Tabs
-- [x] Split panes
+- [x] Split panes — Cmd/Ctrl-click a note in the sidebar, or a tab, to open it to the right
 - [x] Headings, bold, italic, strikethrough, inline code, code blocks, tables, task lists, blockquotes, rules
 - [x] Frontmatter rendered as a properties block
 - [x] Find in file (`Cmd+F`)
@@ -315,11 +315,18 @@ Protocol. Those scripts live in `scripts/`:
 | `scripts/verify-watch.mjs` | Files changed outside the app |
 | `scripts/verify-settings.mjs` | The settings modal and the daily-note template |
 | `scripts/verify-headings.mjs` | The outline pane and links that point at a heading |
+| `scripts/verify-panes.mjs` | Split panes, the tag pane and its search, the graph filters, the theme |
 
 Run them against a running app:
 
 ```bash
-scripts/restart-app.sh                       # build, launch, and expose a debug port
+scripts/restart-app.sh    # build, launch, and expose a debug port
+scripts/verify-all.sh     # run every check and print a summary
+```
+
+Or one at a time:
+
+```bash
 WS=$(sed 's/^WS=//' /tmp/slate.ws)
 node scripts/cdp-probe.mjs "$WS" scripts/verify-features.js
 ```
