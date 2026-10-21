@@ -1,8 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useShallow } from 'zustand/react/shallow'
 import { useVaultStore } from '../store/useVaultStore.js'
 import { buildTagTree } from '../../shared/markdown.js'
 import { openLinkTarget } from '../lib/actions.js'
 import { IconOutgoing, IconTag } from './icons.js'
+
+/**
+ * A shared empty list. Using a literal `[]` in a store selector would
+ * return a new array on every call, which makes the store's snapshot look
+ * changed on every render and sends React into an update loop.
+ */
+const EMPTY: never[] = []
 
 /** The right sidebar: backlinks, outgoing links, tags and the outline. */
 export function RightSidebar() {
@@ -57,7 +65,7 @@ export function RightSidebar() {
 }
 
 function BacklinksPane({ path }: { path: string }) {
-  const backlinks = useVaultStore((s) => s.backlinksByPath[path] ?? [])
+  const backlinks = useVaultStore((s) => s.backlinksByPath[path] ?? EMPTY)
   const [showUnlinked, setShowUnlinked] = useState(false)
   const [unlinked, setUnlinked] = useState<
     { path: string; context: string; line: number }[]
@@ -136,7 +144,7 @@ function BacklinksPane({ path }: { path: string }) {
 }
 
 function OutgoingPane({ path }: { path: string }) {
-  const links = useVaultStore((s) => s.linksByPath[path] ?? [])
+  const links = useVaultStore((s) => s.linksByPath[path] ?? EMPTY)
 
   if (links.length === 0) {
     return (
@@ -278,7 +286,10 @@ function TagBranch({
 }
 
 function TagNotes({ tag }: { tag: string }) {
-  const notes = useVaultStore((s) => s.notes.filter((n) => n.tags.includes(tag)))
+  // The filter produces a new array on every call, so it has to be compared
+  // shallowly — otherwise the store's snapshot changes on every render and
+  // React loops forever.
+  const notes = useVaultStore(useShallow((s) => s.notes.filter((n) => n.tags.includes(tag))))
   if (notes.length === 0) return null
   return (
     <div>
@@ -296,7 +307,7 @@ function TagNotes({ tag }: { tag: string }) {
 }
 
 function OutlinePane({ path }: { path: string }) {
-  const headings = useVaultStore((s) => s.headingsByPath[path] ?? [])
+  const headings = useVaultStore((s) => s.headingsByPath[path] ?? EMPTY)
 
   if (headings.length === 0) {
     return (

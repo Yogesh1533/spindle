@@ -102,6 +102,30 @@ classes (own words: these are structural roles, described here as roles):
   to NoteA (NoteB, NoteC, SubNote). The `3 properties` count matches the three frontmatter
   keys (title, tags, status).
 
+### Tab-strip and pane chrome (accessible names observed)
+
+Each leaf in the main area carries its own set of tab-strip controls, identifiable by
+their `aria-label`s:
+
+- `Navigate back` · `Navigate forward` — per-tab history navigation.
+- `Bookmark` — bookmark the current tab; the Bookmarks sidebar view lists bookmarks by
+  name with a `Close` button each.
+- `More options` — the per-tab overflow menu.
+- `New tab` — the `+` at the end of the tab strip.
+- `New group` — appears in the tab-strip overflow, i.e. a tab group can be created
+  (the workspace layout supports groups, not just tabs).
+- `Collapse all` — on the file-explorer tab specifically (an alternative label for the
+  same "expand/collapse all folders" affordance).
+- The **view-mode toggle** in the note tab carries a multi-line accessible name:
+  > `Current view: editing`
+  > `Click to read`
+  > `⌘+Click to open to the right`
+
+  so the same button cycles editing ⇄ reading on click, and opens the note in a split
+  to the right on ⌘-click. (Its "current view" state is announced in the label itself.)
+
+**Confidence: high — these are literal `aria-label` strings read from the live DOM.**
+
 ### Toggling
 
 - Left/right sidebars have dedicated commands: `app:toggle-left-sidebar`,
@@ -726,10 +750,12 @@ comes from the **date format setting**, not from a wikilink. Do not implement a
   with a **right-aligned type badge** reading `BASE`, and its label is shown without the
   extension.
 - The **active file** is highlighted with a **rounded grey pill** background.
-- The explorer header has a row of icon buttons, observed left-to-right:
-  *new note* (pencil), *new folder* (folder-with-plus), *collapse/reveal* (sort-order
-  control — an up/down arrow glyph), *sort order* (a "list" glyph), and *more options*
-  (a small chevron).
+- The explorer header has a row of icon buttons. Their exact order and accessible names
+  were read from the live DOM (each button's `aria-label`), left to right:
+  `New note` · `New folder` · `Change sort order` · `Auto-reveal current file` ·
+  `Expand all` · `Show search filter`.
+  The last of these only appears once the search filter is enabled; with it enabled two
+  extra controls appear in the search row — `Clear search` and `Match case`.
 - The explorer pane's persisted state is `sortOrder: "alphabetical"`, `autoReveal: false`,
   `showSearch: false`, `searchQuery: ""`.
 
@@ -759,6 +785,36 @@ sorting is a user-facing setting in the pane header, not just a config file valu
 `Same folder as current file` and `In the folder specified below`. This is consistent
 with the observed behaviour that a note created by clicking an unresolved link landed
 at the **vault root** rather than next to the linking note.
+
+**Observed new-note flow** (clicking `New note`, then typing `test`, then Enter):
+
+1. Clicking `New note` created the file **immediately** — the vault gained `Untitled.md`
+   (the default placeholder name) *before* any typing.
+2. Typing a name and pressing Enter **renamed** it to `test.md`.
+3. The new note was **opened in the main area** and became the active file.
+4. The file explorer then listed both `Untitled` and `test`, and separately listed
+   `Untitled 1` — i.e. a second `New note` click produced `Untitled 1` (an
+   **auto-incrementing disambiguator** on the default name), confirming `Untitled`,
+   `Untitled 1`, `Untitled 2`, … is the collision-avoidance scheme.
+
+### The inline title is a contenteditable rename field
+
+**Confidence: high — directly observed.**
+
+The large title at the top of a note is **not** a static heading. It is a
+`<div class="inline-title" contenteditable="true" spellcheck="true"
+autocapitalize="on" tabindex="-1" enterkeyhint="done">` holding the file's basename.
+
+- Clicking it focuses it (`document.activeElement` becomes the div).
+- Typing replaces the text **in the DOM only** — the file on disk is untouched
+  (verified: after typing `Ren`, the vault still contained `test.md` and not `Ren.md`).
+- Pressing **Enter** commits: the file was renamed on disk to `Ren.md`, the active
+  file became `Ren.md`, and the tab/title updated.
+- The rename therefore goes through the **same** rename path as `F2`, and hence the same
+  "Update links" prompt appears when inbound links exist.
+
+This is the primary rename affordance in the reading view; `F2` is the keyboard route
+to the same behaviour.
 
 ### Renaming
 

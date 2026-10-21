@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useVaultStore } from '../store/useVaultStore.js'
 import { useEditorStore } from '../store/useEditorStore.js'
 import { NoteEditor } from '../editor/NoteEditor.js'
-import { loadNote, openLinkTarget } from '../lib/actions.js'
+import { loadNote, openLinkTarget, saveNote } from '../lib/actions.js'
 import { basename } from '../../shared/markdown.js'
 import { IconFile, IconX } from './icons.js'
 
@@ -56,7 +56,10 @@ export function EditorArea() {
             path={tab.path}
             active={tab.path === activeTab}
             onClick={() => setActiveTab(tab.path)}
-            onClose={() => closeTab(tab.path)}
+            onClose={() => {
+              void saveNote(tab.path)
+              closeTab(tab.path)
+            }}
           />
         ))}
       </div>
@@ -82,7 +85,10 @@ export function EditorArea() {
                   path={splitTab.path}
                   active={splitTab.path === activeSplit}
                   onClick={() => setActiveSplit(splitTab.path)}
-                  onClose={() => closeSplit(splitTab.path)}
+                  onClose={() => {
+                    void saveNote(splitTab.path)
+                    closeSplit(splitTab.path)
+                  }}
                   small
                 />
               ))}

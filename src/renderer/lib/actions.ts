@@ -96,6 +96,41 @@ export async function loadNote(path: string): Promise<string> {
 }
 
 /**
+ * Write a note's current content to disk.
+ *
+ * The file is only written when the buffer actually differs from what was
+ * last saved, so a no-op save costs nothing.
+ */
+export async function saveNote(path: string): Promise<boolean> {
+  const editor = useEditorStore.getState()
+  const content = editor.contents[path]
+  if (content === undefined) return false
+  if (!editor.isDirty(path)) return true
+  if (editor.saving[path]) return true
+
+  editor.setSaving(path, true)
+  try {
+    const result = await window.slate.file.write(path, content)
+    if (!result.success) return false
+    editor.setSaved(path, content)
+    return true
+  } catch {
+    return false
+  } finally {
+    editor.setSaving(path, false)
+  }
+}
+
+/**
+ * Save every note with unsaved changes.
+ */
+export async function saveAll(): Promise<void> {
+  const editor = useEditorStore.getState()
+  const paths = Object.keys(editor.contents).filter((path) => editor.isDirty(path))
+  await Promise.all(paths.map((path) => saveNote(path)))
+}
+
+/**
  * Rename a note and update the links in every other note that points at it.
  */
 export async function renameNote(from: string, to: string): Promise<{ changed: number }> {

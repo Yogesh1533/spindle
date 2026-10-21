@@ -13,6 +13,7 @@ import { StatusBar } from './components/StatusBar.js'
 import { VaultPicker } from './components/VaultPicker.js'
 import { useTheme } from './hooks/useTheme.js'
 import { useCommands } from './hooks/useCommands.js'
+import { useAutosave } from './hooks/useAutosave.js'
 import { Toast } from './components/Toast.js'
 
 export function App() {
@@ -28,6 +29,7 @@ export function App() {
   const [toast, setToast] = useState<string | null>(null)
 
   useTheme(settings.theme)
+  useAutosave()
 
   const refreshTree = useCallback(async () => {
     try {
