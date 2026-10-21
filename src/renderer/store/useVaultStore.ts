@@ -201,17 +201,40 @@ export const useVaultStore = create<VaultState>((set, get) => ({
 
   handleFileChange: (event) => {
     const state = get()
+
     if (event.type === 'unlink') {
-      // Close tabs whose file vanished.
-      const stillOpen = (path: string) => state.tabs.some((t) => t.path === path)
-      const tabs = state.tabs.filter((t) => stillOpen(t.path))
-      const splitTabs = state.splitTabs.filter((t) => stillOpen(t.path))
+      // Close tabs whose file vanished. The check has to be against the
+      // tab list *before* filtering, or nothing is ever removed.
+      const openPaths = new Set(state.tabs.map((t) => t.path))
+      const tabs = state.tabs.filter((t) => t.path !== event.path)
+      const splitTabs = state.splitTabs.filter((t) => t.path !== event.path)
       set({
         tabs,
         splitTabs,
-        activeTab: state.activeTab && stillOpen(state.activeTab) ? state.activeTab : (tabs[0]?.path ?? null),
+        activeTab:
+          state.activeTab && state.activeTab !== event.path && openPaths.has(state.activeTab)
+            ? state.activeTab
+            : (tabs[0]?.path ?? null),
         activeSplit:
-          state.activeSplit && stillOpen(state.activeSplit) ? state.activeSplit : (splitTabs[0]?.path ?? null),
+          state.activeSplit && state.activeSplit !== event.path && openPaths.has(state.activeSplit)
+            ? state.activeSplit
+            : (splitTabs[0]?.path ?? null),
+      })
+      return
+    }
+
+    if (event.type === 'rename' && event.oldPath) {
+      // The note moved; follow it so the tab does not point at a file
+      // that is no longer there.
+      const renameTab = (tab: OpenTab) =>
+        tab.path === event.oldPath ? { ...tab, path: event.path } : tab
+      const tabs = state.tabs.map(renameTab)
+      const splitTabs = state.splitTabs.map(renameTab)
+      set({
+        tabs,
+        splitTabs,
+        activeTab: state.activeTab === event.oldPath ? event.path : state.activeTab,
+        activeSplit: state.activeSplit === event.oldPath ? event.path : state.activeSplit,
       })
     }
   },

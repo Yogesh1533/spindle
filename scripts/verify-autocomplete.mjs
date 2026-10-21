@@ -84,9 +84,13 @@ ws.onopen = async () => {
         const wait = (ms) => new Promise((r) => setTimeout(r, ms))
         await window.slate.vault.open('/Users/yogesh/Documents/Slate Sample Vault')
         await wait(2000)
-        // Start from a clean scratch note every run.
-        await window.slate.file.write('Scratch Autocomplete.md', '').catch(() => {})
-        await wait(600)
+        // Start from a clean scratch note every run. createNote is used
+        // rather than write because the note has to be new for the app to
+        // show it in the tree.
+        await window.slate.file.remove('Scratch Autocomplete.md').catch(() => {})
+        await wait(800)
+        await window.slate.file.createNote('Scratch Autocomplete.md', '')
+        await wait(1200)
         const item = [...document.querySelectorAll('.tree__name')].find((e) => e.textContent === 'Scratch Autocomplete.md')
         if (item) { item.click(); await wait(1400) }
         return document.querySelector('.cm-content')?.textContent ?? 'NO_EDITOR'

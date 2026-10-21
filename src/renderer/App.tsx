@@ -85,7 +85,7 @@ export function App() {
       if (cancelled) return
       handleFileChange(event)
       void refreshTree()
-      if (event.type === 'change') void reloadFromDisk(event.path)
+      if (event.type === 'change' || event.type === 'add') void reloadFromDisk(event.path)
     })
     const offSettings = window.slate.on.settingsChanged((next) => {
       if (!cancelled) setSettings(next)

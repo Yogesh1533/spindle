@@ -486,12 +486,19 @@ function applyInline(
 ): void {
   if (!lineText) return
 
+  // Code spans are masked out so a "[[link]]" written as an example inside
+  // `backticks` is left alone.
+  const masked = maskCodeSpans(lineText)
+
   // --- Wikilinks and embeds ---
   for (const match of lineText.matchAll(/(!?)\[\[([^\[\]]+?)\]\]/g)) {
     const at = match.index ?? 0
     const full = match[0]
     const isEmbed = match[1] === '!'
     const inner = match[2]
+
+    // Skip links that sit inside a code span.
+    if (masked.slice(at, at + full.length) !== full) continue
 
     const from = base + at
     const innerStart = from + (isEmbed ? 3 : 2)
@@ -517,7 +524,6 @@ function applyInline(
 
   // --- Tags ---
   // Code spans are masked out so a "#tag" inside `code` is left alone.
-  const masked = maskCodeSpans(lineText)
   for (const match of lineText.matchAll(/(^|[\s(\[])#([A-Za-z0-9_][\w\-/]*)/g)) {
     const at = (match.index ?? 0) + match[1].length
     const to = at + match[0].length - match[1].length

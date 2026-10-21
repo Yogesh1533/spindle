@@ -83,13 +83,30 @@ export async function openDailyNote(): Promise<void> {
   }
 }
 
-/** Read a note's content into the editor store. */
+/**
+ * Read a note's content into the editor store.
+ *
+ * The buffer is reused when it is still current, but a note that was
+ * changed on disk since we last read it is re-read — otherwise switching
+ * back to a tab would show a stale version of a file that another app
+ * (or another vault) has since rewritten.
+ */
 export async function loadNote(path: string): Promise<string> {
   const editor = useEditorStore.getState()
   const existing = editor.contents[path]
-  if (existing !== undefined) return existing
 
-  const content = await window.slate.file.read(path)
+  // A dirty buffer is the user's work in progress and always wins.
+  if (existing !== undefined && editor.isDirty(path)) return existing
+
+  let content: string
+  try {
+    content = await window.slate.file.read(path)
+  } catch {
+    // The file is gone; keep whatever we had rather than blanking the tab.
+    return existing ?? ''
+  }
+  if (existing !== undefined && existing === content) return existing
+
   editor.setSaved(path, content)
   editor.setContent(path, content)
   return content

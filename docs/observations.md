@@ -751,7 +751,9 @@ comes from the **date format setting**, not from a wikilink. Do not implement a
 
 ## 7. File explorer
 
-**Confidence: high for structure/sorting; medium for the rename flow.**
+**Confidence: high for structure, header controls, the new-note flow, the new-folder flow
+and the inline-title rename (all directly observed); low/unknown for in-place rename of
+an *existing* item from the tree and for the right-click context menu (see §10).**
 
 ### Structure
 

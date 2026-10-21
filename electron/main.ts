@@ -133,6 +133,10 @@ async function handleFileChange(event: FileChangeEvent): Promise<void> {
       break
   }
   pushIndex()
+
+  // Tell the renderer as well, so it can refresh the tree and pick up an
+  // edit that was made outside the app.
+  notifyRenderer(event)
 }
 
 // ---------------------------------------------------------------------------
@@ -185,11 +189,24 @@ function registerIpc(): void {
 
   ipcMain.handle(IPC.writeFile, async (_e, rel: string, content: string) => {
     if (!currentRoot) throw new Error('No vault is open.')
+
+    // A write can create the file as well as change it. The watcher will
+    // not report our own write, so the renderer has to be told when the
+    // file is new — otherwise a note created this way never shows up in
+    // the tree.
+    const isNew = !(await exists(currentRoot, rel))
+
     watcher.markSelfWrite(rel)
     await writeFile(currentRoot, rel, content)
     await indexer.indexFile(currentRoot, rel)
     indexer.recomputeBacklinks()
     pushIndex()
+
+    if (isNew) {
+      // The renderer refreshes its tree when it hears about a change, so
+      // an "add" event is enough to make the new note appear.
+      notifyRenderer({ type: 'add', path: rel })
+    }
     return { success: true }
   })
 
@@ -200,12 +217,14 @@ function registerIpc(): void {
     await indexer.indexFile(currentRoot, rel)
     indexer.recomputeBacklinks()
     pushIndex()
+    notifyRenderer({ type: 'add', path: rel })
     return { success: true, path: rel }
   })
 
   ipcMain.handle(IPC.createFolder, async (_e, rel: string) => {
     if (!currentRoot) throw new Error('No vault is open.')
     await createFolder(currentRoot, rel)
+    notifyRenderer({ type: 'addDir', path: rel })
     return { success: true }
   })
 
@@ -219,6 +238,7 @@ function registerIpc(): void {
     await indexer.indexFile(currentRoot, to)
     indexer.recomputeBacklinks()
     pushIndex()
+    notifyRenderer({ type: 'rename', path: to, oldPath: from })
     return { success: true }
   })
 
@@ -229,6 +249,9 @@ function registerIpc(): void {
       indexer.removeFile(rel)
       indexer.recomputeBacklinks()
       pushIndex()
+      notifyRenderer({ type: 'unlink', path: rel })
+    } else {
+      notifyRenderer({ type: 'unlinkDir', path: rel })
     }
     return { success: true }
   })
@@ -278,6 +301,7 @@ function registerIpc(): void {
     await indexer.indexFile(currentRoot, rel)
     indexer.recomputeBacklinks()
     pushIndex()
+    notifyRenderer({ type: 'add', path: rel })
     return { success: true, path: rel, created: true }
   })
 
@@ -361,6 +385,7 @@ function registerIpc(): void {
     await indexer.indexFile(currentRoot, rel)
     indexer.recomputeBacklinks()
     pushIndex()
+    notifyRenderer({ type: 'add', path: rel })
     return { path: rel, created: true }
   })
 
@@ -565,6 +590,18 @@ function buildMenu(): void {
 function send(channel: string, payload: string): void {
   if (!mainWindow || mainWindow.isDestroyed()) return
   mainWindow.webContents.send(channel, payload)
+}
+
+/**
+ * Tell the renderer that the vault changed on disk.
+ *
+ * Writes that Slate makes itself are marked as self-writes so the watcher
+ * ignores its own echo — but that also means the renderer never hears
+ * about them. Every mutation therefore announces itself, so the file tree
+ * stays in step with what is actually on disk.
+ */
+function notifyRenderer(event: FileChangeEvent): void {
+  mainWindow?.webContents.send(IPC.onFileChanged, event)
 }
 
 // ---------------------------------------------------------------------------
