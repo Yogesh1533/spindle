@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      No <meta> CSP: the renderer is loaded over file://, whose origin is
+      opaque, so "script-src 'self'" would block our own bundle. The app's
+      security boundary is enforced in the main process instead:
+      contextIsolation: true, nodeIntegration: false, and a preload that
+      exposes a narrow, typed API rather than Node.
+    -->
+    <title>Slate</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/renderer/main.tsx"></script>
+    <style>
+      /* Shown until React mounts, so the window is never blank. */
+      #root:empty::after {
+        content: 'Loading Slate…';
+        display: block;
+        padding: 40px;
+        color: #8b95a6;
+        font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+        font-size: 14px;
+      }
+    </style>
+  </body>
+</html>
