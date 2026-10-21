@@ -7,7 +7,7 @@ import {
   parseLinkTarget,
   parseSimpleYaml,
 } from '../src/shared/markdown.js'
-import { createResolver, findCandidates, pickBest } from '../src/shared/links.js'
+import { createResolver, findCandidates, pickBest, splitTargetAlias } from '../src/shared/links.js'
 
 describe('parseLinkTarget', () => {
   it('parses a plain target', () => {
@@ -266,5 +266,47 @@ describe('parseSimpleYaml', () => {
 
   it('ignores comments and blank lines', () => {
     expect(parseSimpleYaml('# a comment\n\ntitle: x')).toEqual({ title: 'x' })
+  })
+})
+
+describe('splitTargetAlias', () => {
+  it('splits a plain target', () => {
+    expect(splitTargetAlias('Some Note')).toEqual({
+      target: 'Some Note',
+      subpath: null,
+      alias: null,
+    })
+  })
+
+  it('splits an alias off', () => {
+    expect(splitTargetAlias('Some Note|The Note')).toEqual({
+      target: 'Some Note',
+      subpath: null,
+      alias: 'The Note',
+    })
+  })
+
+  it('splits a heading reference off', () => {
+    expect(splitTargetAlias('Some Note#Section')).toEqual({
+      target: 'Some Note',
+      subpath: 'Section',
+      alias: null,
+    })
+  })
+
+  it('splits a heading reference and an alias off', () => {
+    expect(splitTargetAlias('Some Note#Section|The Note')).toEqual({
+      target: 'Some Note',
+      subpath: 'Section',
+      alias: 'The Note',
+    })
+  })
+
+  it('trims the parts', () => {
+    expect(splitTargetAlias('  Some Note # Section ')).toEqual({
+      target: 'Some Note',
+      subpath: 'Section',
+      alias: null,
+    })
   })
 })

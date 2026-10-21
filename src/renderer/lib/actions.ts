@@ -6,6 +6,7 @@
 import { useVaultStore } from '../store/useVaultStore.js'
 import { useEditorStore } from '../store/useEditorStore.js'
 import { basename } from '../../shared/markdown.js'
+import { splitTargetAlias } from '../../shared/links.js'
 
 /** Create a new note and open it. */
 export async function createNewNote(
@@ -47,7 +48,8 @@ export function activeFolder(): string {
 
 /**
  * Open a link target.
- * - Resolves to an existing note -> open it.
+ * - Resolves to an existing note -> open it, and jump to the heading if the
+ *   link points at one.
  * - Does not resolve -> create the note, then open it.
  */
 export async function openLinkTarget(
@@ -57,13 +59,26 @@ export async function openLinkTarget(
   const state = useVaultStore.getState()
   const source = fromPath ?? state.activeTab ?? undefined
 
-  const resolved = await window.slate.links.resolve(target, source)
+  // A link may point at a heading: "[[Note#Section]]". The heading is
+  // stripped before the note is looked up, and used afterwards to move the
+  // cursor.
+  const { target: noteTarget, subpath } = splitTargetAlias(target)
+
+  const resolved = await window.slate.links.resolve(noteTarget, source)
   if (resolved) {
     state.openTab(resolved)
+    if (subpath) {
+      // Give the editor a moment to open the note before scrolling to it.
+      window.setTimeout(() => {
+        window.dispatchEvent(
+          new CustomEvent('slate:goto-heading', { detail: `${resolved}#${subpath}` })
+        )
+      }, 120)
+    }
     return
   }
 
-  const result = await window.slate.links.createFromLink(target, source ?? '')
+  const result = await window.slate.links.createFromLink(noteTarget, source ?? '')
   if (result?.path) {
     state.openTab(result.path)
   }

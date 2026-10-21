@@ -150,18 +150,29 @@ slate/
 
 ## 5. Milestones
 
-| # | Milestone | Contents | Done when |
-|---|-----------|----------|-----------|
-| 0 | **Scaffold** | Vite + Electron + TS + build scripts, app shell renders | Window opens, hot reload works |
-| 1 | **Vault + file explorer** | Open/create vault, tree, read/write, save, watcher, settings | Notes open & save; external edit appears live |
-| 2 | **Editor** | CodeMirror 6, live preview, source toggle, tabs, split panes | Markdown renders inline; tabs & splits work |
-| 3 | **Wikilinks + backlinks** | Parser, autocomplete, click-to-open, create-on-unresolved, backlinks pane, rename link update | All link forms work; rename updates other notes |
-| 4 | **Search + tags** | Full-text index, quick switcher (Cmd+O), tag pane, tag search | Search finds notes; tags listed & filterable |
-| 5 | **Daily notes + command palette** | Daily note button, folder/template settings, palette (Cmd+P) | Daily note created with template; palette runs commands |
-| 6 | **Graph view** | Force-directed graph, zoom/pan, click-to-open, local graph, filters | Graph renders & is interactive |
-| 7 | **Polish** | Themes (dark/light), outline pane, shortcuts, README, tests green | Feature checklist complete |
+| # | Milestone | Contents | Done when | Status |
+|---|-----------|----------|-----------|--------|
+| 0 | **Scaffold** | Vite + Electron + TS + build scripts, app shell renders | Window opens, hot reload works | Done |
+| 1 | **Vault + file explorer** | Open/create vault, tree, read/write, save, watcher, settings | Notes open & save; external edit appears live | Done |
+| 2 | **Editor** | CodeMirror 6, live preview, source toggle, tabs, split panes | Markdown renders inline; tabs & splits work | Done |
+| 3 | **Wikilinks + backlinks** | Parser, autocomplete, click-to-open, create-on-unresolved, backlinks pane, rename link update | All link forms work; rename updates other notes | Done |
+| 4 | **Search + tags** | Full-text index, quick switcher (Cmd+O), tag pane, tag search | Search finds notes; tags listed & filterable | Done |
+| 5 | **Daily notes + command palette** | Daily note button, folder/template settings, palette (Cmd+P) | Daily note created with template; palette runs commands | Done |
+| 6 | **Graph view** | Force-directed graph, zoom/pan, click-to-open, local graph, filters | Graph renders & is interactive | Done |
+| 7 | **Polish** | Themes (dark/light), outline pane, shortcuts, README, tests green | Feature checklist complete | Done — see the checklist in `README.md` for what is deliberately left out |
 
 Each milestone: implement → run the app → verify → commit.
+
+### Verification
+
+Two layers, because the interesting behaviour of this app is in the UI:
+
+- **Unit tests** (`npm test`, vitest) cover the pure logic: wikilink parsing and
+  resolution, link rewriting on rename, search tokenisation and ranking, and
+  daily-note date formatting.
+- **Scripted app checks** drive the real application over the Chrome DevTools
+  Protocol, with real key events where synthesising input is not enough. They
+  live in `scripts/verify-*.{js,mjs}` and are listed in `README.md`.
 
 ---
 

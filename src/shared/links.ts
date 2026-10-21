@@ -238,13 +238,18 @@ export function rewriteLinkTargets(content: string, oldTarget: string, newTarget
 /** Matches [[...]] including an optional leading ! for embeds. */
 const WIKILINK_PATTERN = /(!?)\[\[([^\[\]]+?)\]\]/g
 
-interface SplitTargetAlias {
+export interface SplitTargetAlias {
   target: string
   subpath: string | null
   alias: string | null
 }
 
-function splitTargetAlias(inner: string): SplitTargetAlias {
+/**
+ * Split a wikilink's inner text into its target, heading reference and alias.
+ *
+ * "[[Note#Heading|alias]]" -> { target: "Note", subpath: "Heading", alias: "alias" }
+ */
+export function splitTargetAlias(inner: string): SplitTargetAlias {
   let rest = inner
   let alias: string | null = null
   const pipe = rest.indexOf('|')

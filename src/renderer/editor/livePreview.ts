@@ -640,8 +640,12 @@ export function linkClickHandler(onLinkClick: (target: string) => void) {
       const link = target.closest('.cm-md-link')
       if (!link) return false
 
+      // The decoration covers the whole inner text, so it may carry an
+      // alias and a heading reference. The alias is only display text and
+      // is dropped; the heading is kept, so "[[Note#Section]]" opens the
+      // note *at* the section.
       const text = link.textContent ?? ''
-      const inner = text.split('|')[0].split('#')[0].trim()
+      const inner = text.split('|')[0].trim()
       if (!inner) return false
 
       event.preventDefault()

@@ -187,6 +187,7 @@ function EditorPane({
       onLinkClick={(target) => void openLinkTarget(target, path)}
       mode={mode}
       fontSize={fontSize}
+      path={path}
       findSignal={findSignal}
     />
   )

@@ -34,6 +34,8 @@ interface Props {
   onLinkClick: (target: string) => void
   mode: ViewMode
   fontSize: number
+  /** The note this pane is showing, e.g. "notes/ideas.md". */
+  path: string
   /** Increments to trigger a find-in-file. */
   findSignal?: number
 }
@@ -46,6 +48,7 @@ export function NoteEditor({
   onLinkClick,
   mode,
   fontSize,
+  path,
   findSignal,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null)
@@ -146,6 +149,46 @@ export function NoteEditor({
     if (!view) return
     openSearchPanel(view)
   }, [findSignal])
+
+  // Jump to a heading, dispatched by the outline pane.
+  const pathRef = useRef(path)
+  pathRef.current = path
+
+  useEffect(() => {
+    const onGoto = (event: Event) => {
+      const view = viewRef.current
+      if (!view) return
+      const anchor = (event as CustomEvent<string>).detail ?? ''
+
+      // The anchor is "<path>#<heading text>". A split pane may also be
+      // listening, so only the pane showing that note should act on it.
+      const hash = anchor.indexOf('#')
+      const targetPath = hash === -1 ? '' : anchor.slice(0, hash)
+      if (targetPath && targetPath !== pathRef.current) return
+
+      const heading = (hash === -1 ? anchor : anchor.slice(hash + 1)).trim()
+      if (!heading) return
+
+      const doc = view.state.doc
+      const lines = doc.toString().split('\n')
+      for (let i = 0; i < lines.length; i++) {
+        const match = /^(#{1,6})\s+(.*?)\s*$/.exec(lines[i])
+        if (!match) continue
+        if (match[2].trim() !== heading) continue
+
+        const line = doc.line(i + 1)
+        const pos = line.from + match[1].length
+        view.dispatch({
+          selection: { anchor: pos },
+          effects: EditorView.scrollIntoView(pos, { y: 'start' }),
+        })
+        view.focus()
+        return
+      }
+    }
+    window.addEventListener('slate:goto-heading', onGoto)
+    return () => window.removeEventListener('slate:goto-heading', onGoto)
+  }, [])
 
   return <div className="editor" ref={hostRef} />
 }

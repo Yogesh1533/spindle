@@ -11,8 +11,9 @@ import { fileURLToPath } from 'node:url'
 
 const require = createRequire(import.meta.url)
 
-const root = path.dirname(fileURLToPath(new URL('.', import.meta.url)))
-const projectRoot = path.resolve(root, '..')
+// The script lives in <project>/scripts, so the project root is its parent.
+const scriptsDir = path.dirname(fileURLToPath(import.meta.url))
+const projectRoot = path.resolve(scriptsDir, '..')
 
 const DEV_SERVER_URL = 'http://localhost:5273'
 const MAIN_DIR = path.join(projectRoot, 'dist', 'main')
