@@ -132,6 +132,13 @@ export function CommandPalette() {
         icon: <IconTag />,
         run: () => useVaultStore.getState().setRightPane('tags'),
       },
+      {
+        id: 'ui:settings',
+        title: 'Open settings',
+        keys: 'Cmd ,',
+        icon: <IconCommand />,
+        run: () => useVaultStore.getState().setSettingsOpen(true),
+      },
     ],
     [settings.theme, setSettings]
   )

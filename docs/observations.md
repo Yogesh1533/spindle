@@ -20,7 +20,7 @@ descriptions are in plain behavioural terms.
 | 4 | `mcp__rea__inspect_electron_page` | Not applicable — it requires a `file://` page target, and Obsidian's renderer is `app://`. |
 | 5 | **Direct Chrome DevTools Protocol over the WebSocket** (custom ~60-line Node client, no third-party deps) | **This is what worked.** It gave full read access to the live renderer: DOM, computed classes, the live `window.app` object, metadata cache contents, and PNG screenshots. All "observed in renderer DOM" claims below come from this. |
 
-**Two practical notes for anyone repeating this:**
+**Practical notes for anyone repeating this:**
 
 - `Runtime.evaluate` with `awaitPromise: true` and `returnByValue: true` is the workhorse.
   Deep or circular return values blow up with *"Object reference chain is too long"* —
@@ -62,6 +62,30 @@ that contains *only* the sandbox vault and marks it `open: true`, launch with a 
 
 **All write experiments below were performed in the sandbox vault `/tmp/slate-obs/obsvault`.**
 The two real vaults were not used as a test target.
+
+**Final integrity check (end of run).** Every config file in both real vaults was
+md5-compared against the backup taken at the start of the run, and all **ten** matched
+byte-for-byte; the real vaults' content files (`Welcome.md`, `create a link.md`,
+`Untitled.base`) retain their original sizes and mtimes, and the shared vault registry
+`~/Library/Application Support/obsidian/obsidian.json` is unchanged
+(`f90b264cc608c05638588a36f79fe9e5`). **Neither real vault was modified.**
+
+### A second startup blocker worth knowing about
+
+Obsidian 1.14.4 performs a GitHub release check during startup
+(log line: `Checking for update using Github`). When that request hangs — which it
+started doing after many rapid relaunches, presumably due to upstream throttling — the
+app **never creates a window**, so the CDP endpoint accepts TCP connections but never
+answers, and there is nothing to observe. Attempts to work around it
+(`--host-resolver-rules`, `--proxy-server`, `NODE_OPTIONS=--require=…` to block GitHub,
+cloning a warm profile) all failed: the preload was not loaded by the packaged Electron
+binary, and the resolver/proxy rules did not prevent the stall.
+
+Practical advice: **launch the isolated instance once, do all the observation, and only
+then restart it.** Treat a CDP endpoint that accepts a connection but never returns
+headers as "the app has not finished starting", not as a client bug. The session that
+produced this document completed all of its observations in a single instance lifetime
+before the stall appeared.
 
 ---
 

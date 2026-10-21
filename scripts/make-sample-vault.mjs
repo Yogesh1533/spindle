@@ -239,6 +239,22 @@ Wrapped up [[Beta]] planning. #daily
 
 This note lives in a subfolder. Links to [[Alpha]] still resolve.
 `,
+
+  'Templates/Daily.md': `---
+tags:
+  - daily
+---
+
+# {{date}}
+
+## Notes
+
+- {{time:HH:mm}} — started writing
+
+## Tasks
+
+- [ ] Plan the day
+`,
 }
 
 async function main() {

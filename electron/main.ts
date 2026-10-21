@@ -10,6 +10,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { IPC } from '../src/shared/ipc-contract.js'
 import { createResolver, rewriteLinkTargets } from '../src/shared/links.js'
+import { applyTemplateTokens, formatDate } from '../src/shared/dates.js'
 import type { AppSettings, FileChangeEvent, SearchResult } from '../src/shared/types.js'
 import { VaultIndexer, type IndexSnapshot } from './indexer.js'
 import { readSettings, writeSettings } from './settings.js'
@@ -396,65 +397,6 @@ function registerIpc(): void {
 }
 
 // ---------------------------------------------------------------------------
-// Daily note helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Format a date using the tokens Obsidian supports in daily note settings.
- * Supports YYYY, YY, MM, M, DD, D, WW, dddd, ddd, and [[date]] / {{date}}.
- */
-export function formatDate(date: Date, format: string): string {
-  const pad = (n: number) => String(n).padStart(2, '0')
-
-  const tokens: Record<string, string> = {
-    YYYY: String(date.getFullYear()),
-    YY: String(date.getFullYear()).slice(-2),
-    MMMM: date.toLocaleString('en-US', { month: 'long' }),
-    MMM: date.toLocaleString('en-US', { month: 'short' }),
-    MM: pad(date.getMonth() + 1),
-    M: String(date.getMonth() + 1),
-    DD: pad(date.getDate()),
-    D: String(date.getDate()),
-    dddd: date.toLocaleString('en-US', { weekday: 'long' }),
-    ddd: date.toLocaleString('en-US', { weekday: 'short' }),
-    WW: String(isoWeek(date)),
-  }
-
-  return format.replace(/YYYY|YY|MMMM|MMM|MM|M|DD|D|dddd|ddd|WW/g, (token) => tokens[token] ?? token)
-}
-
-/** ISO-8601 week number. */
-function isoWeek(date: Date): number {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  const dayNum = d.getUTCDay() || 7
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
-  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
-}
-
-/**
- * Expand template tokens in a daily-note template.
- *   {{date}} / {{date:YYYY-MM-DD}}   the date
- *   {{title}}                       the file name without extension
- *   {{time}} / {{time:HH:mm}}       the time
- */
-export function applyTemplateTokens(template: string, date: Date, title: string): string {
-  return template.replace(/\{\{([^}]+)\}\}/g, (full, body: string) => {
-    const [key, arg] = body.split(':')
-    switch (key.trim()) {
-      case 'date':
-        return formatDate(date, (arg ?? 'YYYY-MM-DD').trim())
-      case 'title':
-        return title
-      case 'time':
-        return formatDate(date, (arg ?? 'HH:mm').trim().replace('HH', 'HH'))
-      default:
-        return full
-    }
-  })
-}
-
-// ---------------------------------------------------------------------------
 // Menu
 // ---------------------------------------------------------------------------
 
@@ -548,6 +490,11 @@ function buildMenu(): void {
           label: 'Graph view',
           accelerator: 'CmdOrCtrl+G',
           click: () => send('command', 'ui:graph-view'),
+        },
+        {
+          label: 'Settings…',
+          accelerator: 'CmdOrCtrl+,',
+          click: () => send('command', 'ui:settings'),
         },
         { type: 'separator' },
         {

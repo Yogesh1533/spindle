@@ -52,6 +52,8 @@ export interface VaultState {
   commandPaletteOpen: boolean
   searchOpen: boolean
   tagSearchOpen: boolean
+  /** Whether the settings modal is open. */
+  settingsOpen: boolean
   /** Path currently being renamed in the file explorer. */
   renamingPath: string | null
 
@@ -84,6 +86,7 @@ export interface VaultState {
   setCommandPaletteOpen: (open: boolean) => void
   setSearchOpen: (open: boolean) => void
   setTagSearchOpen: (open: boolean) => void
+  setSettingsOpen: (open: boolean) => void
   setRenamingPath: (path: string | null) => void
 
   handleFileChange: (event: FileChangeEvent) => void
@@ -112,6 +115,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   commandPaletteOpen: false,
   searchOpen: false,
   tagSearchOpen: false,
+  settingsOpen: false,
   renamingPath: null,
 
   setRoot: (root) => set({ root }),
@@ -197,6 +201,7 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   setCommandPaletteOpen: (commandPaletteOpen) => set({ commandPaletteOpen }),
   setSearchOpen: (searchOpen) => set({ searchOpen }),
   setTagSearchOpen: (tagSearchOpen) => set({ tagSearchOpen }),
+  setSettingsOpen: (settingsOpen) => set({ settingsOpen }),
   setRenamingPath: (renamingPath) => set({ renamingPath }),
 
   handleFileChange: (event) => {

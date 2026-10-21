@@ -9,6 +9,7 @@ import { EditorArea } from './components/EditorArea.js'
 import { QuickSwitcher } from './components/QuickSwitcher.js'
 import { CommandPalette } from './components/CommandPalette.js'
 import { SearchOverlay } from './components/SearchOverlay.js'
+import { SettingsModal } from './components/SettingsModal.js'
 import { GraphView } from './components/GraphView.js'
 import { StatusBar } from './components/StatusBar.js'
 import { VaultPicker } from './components/VaultPicker.js'
@@ -157,6 +158,7 @@ export function App() {
       <QuickSwitcher />
       <CommandPalette />
       <SearchOverlay />
+      <SettingsModal />
       {toast && <Toast message={toast} onDismiss={() => setToast(null)} />}
     </div>
   )

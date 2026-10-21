@@ -25,6 +25,7 @@ export type CommandId =
   | 'ui:toggle-file-explorer'
   | 'ui:toggle-right-sidebar'
   | 'ui:toggle-theme'
+  | 'ui:settings'
   | 'daily:open'
 
 export interface CommandContext {
@@ -109,6 +110,12 @@ export function useCommands(ctx: CommandContext): void {
       if (key === 's') {
         event.preventDefault()
         void saveActiveNote()
+        return
+      }
+      // Cmd/Ctrl+, — settings
+      if (key === ',') {
+        event.preventDefault()
+        state.setSettingsOpen(true)
         return
       }
     }
@@ -202,6 +209,9 @@ export async function runCommand(command: CommandId, ctx?: CommandContext): Prom
       await window.slate.settings.set({ theme: next })
       break
     }
+    case 'ui:settings':
+      state.setSettingsOpen(true)
+      break
     case 'daily:open':
       await openDailyNote()
       break
