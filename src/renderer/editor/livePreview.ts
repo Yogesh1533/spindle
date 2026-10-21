@@ -600,11 +600,14 @@ export function livePreview(options: LivePreviewOptions) {
     update(value, tr) {
       if (!tr.docChanged && !tr.effects.length) return value
       // The document is the source of truth here: the set is rebuilt from
-      // the new text, so its offsets stay correct. Whether the preview is
-      // enabled is read from the *previous* value rather than from
-      // tr.state — reading another field from inside an update makes
-      // CodeMirror re-run this field forever.
-      const enabled = tr.startState.field(livePreviewField)
+      // the new text, so its offsets stay correct.
+      //
+      // The preview flag is read from `tr.state` — the state *after* this
+      // transaction. Reading it from `tr.startState` would use the previous
+      // value and the toggle would appear to lag one keystroke behind.
+      // `tr.state.field(...)` is safe here: the field is declared before
+      // this one, so its value is already up to date.
+      const enabled = tr.state.field(livePreviewField)
       if (!enabled) return Decoration.none
       return buildFromText(tr.state.doc.toString(), resolve)
     },

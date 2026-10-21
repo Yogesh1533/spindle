@@ -1,39 +1,50 @@
 /**
  * End-to-end feature check, run against the live app over CDP.
  *
- * Usage: node scripts/cdp-probe.mjs <ws-url> scripts/verify-features.js
+ * Usage: node scripts/cdp-probe.mjs <ws-url> scripts/verify-features.js [timeoutMs]
  */
 (async () => {
   const wait = (ms) => new Promise((r) => setTimeout(r, ms))
-  const results = {}
+  const results = []
   const check = (name, pass, detail) => {
-    results[name] = pass ? 'PASS' : `FAIL${detail ? ' — ' + detail : ''}`
+    results.push(`${pass ? 'PASS' : 'FAIL'}  ${name}${!pass && detail ? '  → ' + detail : ''}`)
+  }
+  const $ = (sel) => document.querySelector(sel)
+  const $$ = (sel) => [...document.querySelectorAll(sel)]
+  const count = (sel) => $$(sel).length
+  const key = (k, opts = {}) =>
+    window.dispatchEvent(
+      new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true, ...opts })
+    )
+  const activeTabName = () => {
+    const t = $('.tab.is-active .tab__name')
+    return t ? t.textContent : ''
   }
 
   // ---- Open the vault ----
   await window.slate.vault.open('/Users/yogesh/Documents/Slate Sample Vault')
-  await wait(1500)
-  check('vault opens', !!document.querySelector('.tree'), 'no file tree')
+  await wait(1800)
+  check('vault opens, file tree renders', !!$('.tree'), 'no .tree')
 
-  const treeNames = [...document.querySelectorAll('.tree__name')].map((e) => e.textContent)
-  check('tree lists notes', treeNames.includes('Welcome.md'), treeNames.join('|'))
+  const treeNames = $$('.tree__name').map((e) => e.textContent)
+  check('tree lists the sample notes', treeNames.includes('Welcome.md'), treeNames.join('|'))
 
   // ---- Open a note ----
   const openNote = async (name) => {
-    const item = [...document.querySelectorAll('.tree__name')].find((e) => e.textContent === name)
+    const item = $$('.tree__name').find((e) => e.textContent === name)
     if (!item) return false
     item.click()
-    await wait(900)
+    await wait(1100)
     return true
   }
 
   await openNote('Welcome.md')
-  const cm = document.querySelector('.cm-content')
+  const cm = $('.cm-content')
   check('editor mounts', !!cm, 'no .cm-content')
-  if (!cm) return JSON.stringify(results, null, 1)
+  if (!cm) return results.join('\n')
+  check('tab reflects the open note', activeTabName() === 'Welcome.md', activeTabName())
 
   // ---- Live preview decorations ----
-  const count = (sel) => document.querySelectorAll(sel).length
   check('headings styled', count('.cm-md-heading') > 0, String(count('.cm-md-heading')))
   check('wikilinks styled', count('.cm-md-link') > 0, String(count('.cm-md-link')))
   check('tags styled', count('.cm-md-tag') > 0, String(count('.cm-md-tag')))
@@ -43,89 +54,109 @@
   check('tables styled', count('.cm-md-table-line') > 0, String(count('.cm-md-table-line')))
   check('code fences styled', count('.cm-md-codeblock-line') > 0, String(count('.cm-md-codeblock-line')))
   check('blockquotes styled', count('.cm-md-quote-line') > 0, String(count('.cm-md-quote-line')))
+  check('frontmatter styled', count('.cm-md-frontmatter-line') > 0, String(count('.cm-md-frontmatter-line')))
 
-  // The raw markers must be hidden.
+  // Raw markers must be hidden in preview mode.
   const text = cm.textContent || ''
-  check('wikilink brackets hidden', !text.includes('[['), 'brackets still visible')
-  check('heading markers hidden', !/^#{1,6} /m.test(text), 'hashes still visible')
-  check('bold markers hidden', !text.includes('**'), 'asterisks still visible')
+  check('wikilink brackets hidden', !text.includes('[['), 'brackets visible')
+  check('heading hashes hidden', !/^#{1,6} /m.test(text), 'hashes visible')
+  check('bold asterisks hidden', !text.includes('**'), 'asterisks visible')
+  // The tag pill keeps its '#', so check the *markup* form is gone instead.
+  const raw = await window.slate.file.read('Welcome.md')
+  check('source really contains a #tag', raw.includes('#daily'), 'no #daily in source')
+  check('tag pill renders the #', $$('.cm-md-tag').some((e) => e.textContent.startsWith('#')), $$('.cm-md-tag').map((e) => e.textContent).join('|'))
 
-  // ---- Backlinks ----
-  const paneText = document.querySelector('.sidebar--right')?.textContent || ''
-  check('backlinks pane populated', /Linked mentions \(\d+\)/.test(paneText), paneText.slice(0, 80))
+  // ---- Backlinks pane ----
+  const backlinksBtn = $$('.ribbon__button').find((b) => /backlinks/i.test(b.title || b.textContent || ''))
+  if (backlinksBtn) backlinksBtn.click()
+  await wait(600)
+  const paneText = $('.sidebar--right')?.textContent || ''
+  check('backlinks pane populated', /Linked mentions \(\d+\)/.test(paneText), paneText.slice(0, 90))
 
   // ---- Click a wikilink to navigate ----
-  const link = document.querySelector('.cm-md-link')
+  const link = $('.cm-md-link')
   if (link) {
-    const linkText = link.textContent
-    link.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }))
-    await wait(900)
-    const tab = document.querySelector('.tab')?.textContent || ''
-    check('clicking a wikilink opens the target', tab.includes(linkText.trim()), `tab=${tab} want=${linkText}`)
+    const wanted = link.textContent.trim()
+    link.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, button: 0 }))
+    await wait(1200)
+    check('clicking a wikilink opens the target', activeTabName().includes(wanted), `tab=${activeTabName()} want=${wanted}`)
   } else {
-    check('clicking a wikilink opens the target', false, 'no link found')
+    check('clicking a wikilink opens the target', false, 'no .cm-md-link found')
   }
 
   // ---- Quick switcher (Cmd+O) ----
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'o', metaKey: true, bubbles: true }))
-  await wait(500)
-  check('quick switcher opens', !!document.querySelector('.quick-switcher, [class*=switcher]'))
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-  await wait(300)
+  key('o', { metaKey: true })
+  await wait(600)
+  check('quick switcher opens', !!$('.palette__input'))
+  key('Escape')
+  await wait(400)
 
   // ---- Command palette (Cmd+P) ----
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'p', metaKey: true, bubbles: true }))
-  await wait(500)
-  check('command palette opens', !!document.querySelector('[class*=palette]'))
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-  await wait(300)
+  key('p', { metaKey: true })
+  await wait(600)
+  check('command palette opens', !!$('.palette__input'))
+  const cmdItems = count('.palette__item')
+  check('command palette lists commands', cmdItems > 5, String(cmdItems))
+  key('Escape')
+  await wait(400)
 
   // ---- Search (Cmd+Shift+F) ----
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'f', metaKey: true, shiftKey: true, bubbles: true }))
-  await wait(500)
-  check('search overlay opens', !!document.querySelector('[class*=search]'))
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-  await wait(300)
+  key('f', { metaKey: true, shiftKey: true })
+  await wait(600)
+  check('search overlay opens', !!$('.palette__input'))
+  key('Escape')
+  await wait(400)
 
   // ---- Graph view (Cmd+G) ----
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', metaKey: true, bubbles: true }))
-  await wait(1200)
-  const graph = document.querySelector('[class*=graph]')
+  key('g', { metaKey: true })
+  await wait(1800)
+  const graph = $('.graph-container')
   check('graph view opens', !!graph)
   if (graph) {
-    const nodes = graph.querySelectorAll('circle, [class*=node]').length
+    const nodes = count('.graph-node')
     check('graph draws nodes', nodes > 0, String(nodes))
+    const edges = count('.graph-edge')
+    check('graph draws edges', edges > 0, String(edges))
   }
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', metaKey: true, bubbles: true }))
-  await wait(500)
+  key('g', { metaKey: true })
+  await wait(700)
 
   // ---- Daily note (Cmd+D) ----
-  const before = (await window.slate.vault.tree()).length
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', metaKey: true, bubbles: true }))
-  await wait(1200)
-  const tabText = document.querySelector('.tab')?.textContent || ''
-  check('daily note opens', /\d{4}-\d{2}-\d{2}/.test(tabText), `tab=${tabText}`)
+  key('d', { metaKey: true })
+  await wait(1800)
+  check('daily note opens', /\d{4}-\d{2}-\d{2}/.test(activeTabName()), `tab=${activeTabName()}`)
 
   // ---- Source / preview toggle (Cmd+E) ----
   await openNote('Welcome.md')
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'e', metaKey: true, bubbles: true }))
-  await wait(600)
-  const sourceText = document.querySelector('.cm-content')?.textContent || ''
-  check('source mode shows raw markdown', sourceText.includes('[['), 'markers still hidden in source mode')
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'e', metaKey: true, bubbles: true }))
-  await wait(600)
-  const previewText = document.querySelector('.cm-content')?.textContent || ''
+  key('e', { metaKey: true })
+  await wait(800)
+  const sourceText = $('.cm-content')?.textContent || ''
+  check('source mode shows raw markdown', sourceText.includes('[['), 'markers still hidden')
+  key('e', { metaKey: true })
+  await wait(800)
+  const previewText = $('.cm-content')?.textContent || ''
   check('preview mode hides markers', !previewText.includes('[['), 'markers visible in preview mode')
 
   // ---- New note (Cmd+N) ----
-  const tabCountBefore = document.querySelectorAll('.tab').length
-  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', metaKey: true, bubbles: true }))
-  await wait(1000)
-  check('new note opens a tab', document.querySelectorAll('.tab').length > tabCountBefore)
+  const tabCountBefore = count('.tab')
+  key('n', { metaKey: true })
+  await wait(1300)
+  check('new note opens a tab', count('.tab') > tabCountBefore, `${tabCountBefore} → ${count('.tab')}`)
 
   // ---- Status bar ----
-  const status = document.querySelector('.statusbar')?.textContent || ''
-  check('status bar shows word count', /\d+ words/.test(status), status.slice(0, 60))
+  const status = $('.status-bar')?.textContent || ''
+  check('status bar shows a word count', /\d+ words/.test(status), status.slice(0, 60))
 
-  return JSON.stringify(results, null, 1)
+  // ---- Tag pane ----
+  const tagBtn = $$('.ribbon__button').find((b) => /tags/i.test(b.title || b.textContent || ''))
+  if (tagBtn) {
+    tagBtn.click()
+    await wait(700)
+    const chips = count('.tag-chip')
+    check('tag pane lists tags', chips > 0, String(chips))
+  } else {
+    check('tag pane lists tags', false, 'no Tags button in ribbon')
+  }
+
+  return results.join('\n')
 })()

@@ -45,9 +45,12 @@ ws.onmessage = (event) => {
   process.exit(0)
 }
 
+// Long enough for probes that drive the UI and wait on timers.
+const timeoutMs = Number(process.argv[4] ?? 60_000)
+
 setTimeout(() => {
   if (!done) {
     console.error('timed out')
     process.exit(1)
   }
-}, 10000)
+}, timeoutMs)
