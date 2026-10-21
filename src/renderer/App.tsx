@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useVaultStore } from './store/useVaultStore.js'
+import { useEditorStore } from './store/useEditorStore.js'
 import { TitleBar } from './components/TitleBar.js'
 import { Ribbon } from './components/Ribbon.js'
 import { FileExplorer } from './components/FileExplorer.js'
@@ -50,6 +51,25 @@ export function App() {
     }
   }, [setIndex, setIndexing])
 
+  /**
+   * Pull a note's text back from disk after an outside edit.
+   *
+   * The editor buffer wins: if the note has unsaved changes the file on
+   * disk is stale, and overwriting the buffer would throw away the user's
+   * work. A dirty note keeps its buffer and is left to the next autosave.
+   */
+  const reloadFromDisk = useCallback(async (path: string) => {
+    const editor = useEditorStore.getState()
+    if (editor.isDirty(path)) return
+    try {
+      const content = await window.slate.file.read(path)
+      editor.setSaved(path, content)
+      editor.setContent(path, content)
+    } catch {
+      // The file may have been removed between the event and the read.
+    }
+  }, [])
+
   // ---- Boot: load settings and subscribe to main-process events ----
   useEffect(() => {
     let cancelled = false
@@ -65,6 +85,7 @@ export function App() {
       if (cancelled) return
       handleFileChange(event)
       void refreshTree()
+      if (event.type === 'change') void reloadFromDisk(event.path)
     })
     const offSettings = window.slate.on.settingsChanged((next) => {
       if (!cancelled) setSettings(next)

@@ -19,7 +19,8 @@ const ECHO_WINDOW_MS = 1500
 export class VaultWatcher {
   private watcher: FSWatcher | null = null
   private root: string | null = null
-  private selfWrites = new Map<string, number>()
+  /** path -> { echoes still expected, when the write happened }. */
+  private selfWrites = new Map<string, { pending: number; at: number }>()
 
   constructor(
     private readonly onChange: (event: FileChangeEvent) => void,
@@ -66,20 +67,34 @@ export class VaultWatcher {
 
   /**
    * Mark a path as written by us so the watcher ignores the echo.
+   *
+   * A path can be written several times in quick succession (autosave, then
+   * an explicit save), so a counter is kept and only the matching echo is
+   * dropped. A single write is one echo; a second write before the first
+   * echo arrives means two echoes are expected.
    */
   markSelfWrite(relativePath: string): void {
-    this.selfWrites.set(relativePath, Date.now())
+    const existing = this.selfWrites.get(relativePath)
+    this.selfWrites.set(relativePath, {
+      pending: (existing?.pending ?? 0) + 1,
+      at: Date.now(),
+    })
   }
 
   /** Is this path one we just wrote ourselves? */
   private isSelfWrite(relativePath: string): boolean {
-    const at = this.selfWrites.get(relativePath)
-    if (at === undefined) return false
-    if (Date.now() - at > ECHO_WINDOW_MS) {
+    const entry = this.selfWrites.get(relativePath)
+    if (!entry) return false
+    if (Date.now() - entry.at > ECHO_WINDOW_MS) {
+      // The echo never arrived, or arrived far too late to be ours.
       this.selfWrites.delete(relativePath)
       return false
     }
-    this.selfWrites.delete(relativePath)
+    if (entry.pending <= 1) {
+      this.selfWrites.delete(relativePath)
+    } else {
+      this.selfWrites.set(relativePath, { pending: entry.pending - 1, at: entry.at })
+    }
     return true
   }
 

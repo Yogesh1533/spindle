@@ -1,19 +1,26 @@
 /**
  * Creates a sample vault for development and testing.
  *
- * Usage: node scripts/make-sample-vault.mjs [target-folder]
+ * Usage: node scripts/make-sample-vault.mjs [target-folder] [--keep]
  *
  * The generated vault exercises every feature Slate supports: frontmatter,
  * wikilinks, aliases, heading links, embeds, tags, tables, task lists and
  * code blocks.
+ *
+ * The folder is emptied first so repeated runs always produce the same
+ * vault. Pass --keep to add the sample notes without removing anything
+ * that is already there.
  */
 
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, writeFile, rm, readdir } from 'node:fs/promises'
 import path from 'node:path'
 import os from 'node:os'
 
+const args = process.argv.slice(2)
+const keep = args.includes('--keep')
 const target = path.resolve(
-  process.argv[2] ?? path.join(os.homedir(), 'Documents', 'Slate Sample Vault')
+  args.find((a) => !a.startsWith('--')) ??
+    path.join(os.homedir(), 'Documents', 'Slate Sample Vault')
 )
 
 const files = {
@@ -219,6 +226,16 @@ This note lives in a subfolder. Links to [[Alpha]] still resolve.
 
 async function main() {
   await mkdir(target, { recursive: true })
+
+  if (!keep) {
+    // Start from a clean folder so the vault is always the same. Only
+    // Markdown files and folders are removed; anything else is left alone.
+    for (const entry of await readdir(target, { withFileTypes: true })) {
+      if (entry.name.startsWith('.')) continue
+      if (entry.isFile() && !entry.name.toLowerCase().endsWith('.md')) continue
+      await rm(path.join(target, entry.name), { recursive: true, force: true })
+    }
+  }
 
   for (const [relative, content] of Object.entries(files)) {
     if (content === null) continue

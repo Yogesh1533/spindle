@@ -20,6 +20,19 @@ descriptions are in plain behavioural terms.
 | 4 | `mcp__rea__inspect_electron_page` | Not applicable — it requires a `file://` page target, and Obsidian's renderer is `app://`. |
 | 5 | **Direct Chrome DevTools Protocol over the WebSocket** (custom ~60-line Node client, no third-party deps) | **This is what worked.** It gave full read access to the live renderer: DOM, computed classes, the live `window.app` object, metadata cache contents, and PNG screenshots. All "observed in renderer DOM" claims below come from this. |
 
+**Two practical notes for anyone repeating this:**
+
+- `Runtime.evaluate` with `awaitPromise: true` and `returnByValue: true` is the workhorse.
+  Deep or circular return values blow up with *"Object reference chain is too long"* —
+  coerce inside the expression (`String(x)`, `JSON.stringify(x)`) before returning.
+- **Do not leave a `Runtime.evaluate` promise pending.** The CDP HTTP endpoint accepted
+  the TCP connection but stopped answering entirely after one evaluation hung, and the
+  app could not be revived without a restart. Always wrap evaluations in a timeout and
+  prefer short, non-blocking expressions.
+- Some interactions need **real input events**, not programmatic dispatch: typing `[[`
+  into the editor only opened the autocomplete widget when sent as
+  `Input.dispatchKeyEvent`, not when dispatched into CodeMirror directly.
+
 ### Getting an isolated instance to observe (important operational note)
 
 `--user-data-dir` alone is **not enough isolation**. On the first attempt, a second Obsidian
@@ -767,13 +780,10 @@ sorting is a user-facing setting in the pane header, not just a config file valu
 
 ### Creating
 
-- `file-explorer:new-file` — "Create new note" (`Mod+N`): creates a note in the vault root
-  (or in the selected folder if one is selected), opening an inline **text input** in the
-  tree for the filename.
-- `file-explorer:new-file-in-new-pane` — "Create note to the right" (`Mod+Shift+N`): same
-  but opens the new note in a split pane to the right of the current one.
-- `file-explorer:new-folder` — "Files: Create new folder": creates a folder with an inline
-  name input.
+- `file-explorer:new-file` — "Create new note" (`Mod+N`).
+- `file-explorer:new-file-in-current-tab` — "Create new note in current tab".
+- `file-explorer:new-file-in-new-pane` — "Create note to the right" (`Mod+Shift+N`).
+- `file-explorer:new-folder` — "Files: Create new folder".
 - `file-explorer:duplicate-file` — "Duplicate current file".
 - `file-explorer:move-file` — "Move current file to another folder".
 - `file-explorer:reveal-active-file` — "Files: Reveal current file in navigation" (autoReveal
@@ -786,16 +796,37 @@ sorting is a user-facing setting in the pane header, not just a config file valu
 with the observed behaviour that a note created by clicking an unresolved link landed
 at the **vault root** rather than next to the linking note.
 
-**Observed new-note flow** (clicking `New note`, then typing `test`, then Enter):
+#### The new-note flow — DIRECTLY OBSERVED
 
-1. Clicking `New note` created the file **immediately** — the vault gained `Untitled.md`
-   (the default placeholder name) *before* any typing.
-2. Typing a name and pressing Enter **renamed** it to `test.md`.
-3. The new note was **opened in the main area** and became the active file.
-4. The file explorer then listed both `Untitled` and `test`, and separately listed
-   `Untitled 1` — i.e. a second `New note` click produced `Untitled 1` (an
-   **auto-incrementing disambiguator** on the default name), confirming `Untitled`,
-   `Untitled 1`, `Untitled 2`, … is the collision-avoidance scheme.
+Clicking the explorer's **New note** button (or running `file-explorer:new-file` — the
+two were verified to behave identically) does this:
+
+1. A Markdown file is **created immediately**, before the user types anything, named
+   `Untitled.md`.
+2. The new note is **opened in the main area** and becomes the active file.
+3. The **inline title** is focused with its text pre-selected, so typing replaces it.
+4. Pressing **Enter** renames the file to the typed name.
+
+If the default name already exists, the app appends an **auto-incrementing counter**:
+observed `Untitled.md` → `Untitled 1.md` → `Untitled 2.md` → `Untitled 3.md`. The same
+countering was observed for folders (`Untitled` → `Untitled 1`).
+
+**There is no inline filename input in the tree for notes.** The tree row of the new
+note is *not* editable — the only editable surface at that moment is the inline title
+in the main pane. (Folders are different: see below.)
+
+#### The new-folder flow — DIRECTLY OBSERVED
+
+Clicking **New folder**:
+
+1. Creates the folder **immediately** named `Untitled` (countered: `Untitled 1`, …).
+2. The folder's tree row becomes a **`contenteditable` div** — the row's text element
+   (`nav-folder-title-content`) is switched to `contenteditable="true"` and focused.
+3. Typing replaces the row text; the folder is not renamed until **Enter** is pressed,
+   after which the row reverts to a plain, non-editable element.
+
+So: **new folders are named inline in the tree; new notes are named in the main pane's
+inline title.**
 
 ### The inline title is a contenteditable rename field
 
@@ -804,6 +835,8 @@ at the **vault root** rather than next to the linking note.
 The large title at the top of a note is **not** a static heading. It is a
 `<div class="inline-title" contenteditable="true" spellcheck="true"
 autocapitalize="on" tabindex="-1" enterkeyhint="done">` holding the file's basename.
+(There is a second, separate `view-header-title` element with the same
+`contenteditable="true"` in the view header — the two are distinct elements.)
 
 - Clicking it focuses it (`document.activeElement` becomes the div).
 - Typing replaces the text **in the DOM only** — the file on disk is untouched
@@ -818,9 +851,14 @@ to the same behaviour.
 
 ### Renaming
 
-- `workspace:edit-file-title` — **"Rename file"**, hotkey **`F2`**. The command is in the
+- `workspace:edit-file-title` — **"Rename file"**, hotkey **`F2`** (confirmed in the
+  command registry: `hotkeys: [{ modifiers: [], key: "F2" }]`). The command is in the
   `workspace:` namespace (not `file-explorer:`), which is why it applies to the open note
   rather than to a tree selection.
+- Executing `workspace:edit-file-title` **focuses the inline title and selects its
+  text** (observed: `document.activeElement` becomes the `.inline-title` div and
+  `window.getSelection()` returns the file's basename). It does **not** open a modal
+  text field — the rename happens in place in the title.
 - The metadata cache exposes an `onRename` hook, confirming renames are tracked by the
   link resolver.
 
@@ -1048,6 +1086,30 @@ control. Pane state: `sortOrder: "frequency"`, `showSearch`, `searchQuery`.
     vault path under md5/sha1/sha256/sha512/blake2 in utf-8 or utf-16. The algorithm is
     still unknown; a clean-room implementation can pick its own scheme as long as it is
     stable and unique per path.
+12. **In-place rename in the file-explorer tree** — the tree rows for both files and
+    folders are plain, non-editable elements
+    (`nav-file-title` / `nav-folder-title-content`, no `contenteditable` attribute) in
+    their resting state. A double-click on a tree row was observed to fire a `dblclick`
+    event and to select the row text, but no inline edit field appeared; the same is true
+    of a right-click, which produced no DOM menu. Obsidian's context menus and
+    double-click "rename in place" therefore could not be observed directly.
+    **What is confirmed** is that the *new-folder* flow does put the tree row into
+    `contenteditable="true"` mode, so the tree row is capable of being an edit field —
+    a reimplementation should provide one for renaming existing items too.
+13. **Right-click context menus** — the tree's right-click menu could not be observed:
+    the `contextmenu` DOM event was dispatched and no `.menu` / `.popover` element
+    appeared in the renderer. This is most likely because Obsidian's menus are native
+    Electron menu instances rather than DOM overlays, which would also explain why the
+    command palette (`command-palette:open`) produced no visible prompt overlay when
+    invoked programmatically. Treat "Obsidian's menus are native, not DOM" as a
+    hypothesis, not a verified fact.
+14. **The `F2` keypress itself** — the `F2` binding is confirmed in the command
+    registry (`workspace:edit-file-title` → `[{modifiers: [], key: "F2"}]`), and running
+    the command programmatically focuses and selects the inline title. A *synthesised*
+    `F2` key event, however, did not trigger the rename in the observation session,
+    most likely because the isolated window was not the key-focused window (its body
+    never gained the `is-focused` class). **The `F2` keystroke path was therefore not
+    confirmed end-to-end** — only the command it is bound to.
 
 ---
 
