@@ -180,6 +180,11 @@ function registerIpc(): void {
 
   ipcMain.handle(IPC.getIndexSnapshot, (): IndexSnapshot => indexer.snapshot())
 
+  // Which vault is open right now. A renderer that reloads (Cmd+R, or a
+  // crash recovery) has to be able to ask, because the main process keeps
+  // the vault open across renderer reloads.
+  ipcMain.handle(IPC.getCurrentVault, () => currentRoot)
+
   ipcMain.handle(IPC.closeVault, async () => {
     await watcher.stop()
     currentRoot = null

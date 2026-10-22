@@ -14,6 +14,7 @@ const api = {
     pickFolder: () => ipcRenderer.invoke(IPC.pickVaultFolder),
     tree: () => ipcRenderer.invoke(IPC.getVaultTree),
     indexSnapshot: () => ipcRenderer.invoke(IPC.getIndexSnapshot),
+    current: () => ipcRenderer.invoke(IPC.getCurrentVault),
     close: () => ipcRenderer.invoke(IPC.closeVault),
   },
   file: {

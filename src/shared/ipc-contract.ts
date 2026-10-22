@@ -10,6 +10,7 @@ export const IPC = {
   pickVaultFolder: 'vault:pick-folder',
   getVaultTree: 'vault:tree',
   getIndexSnapshot: 'vault:index-snapshot',
+  getCurrentVault: 'vault:current',
   closeVault: 'vault:close',
 
   // Files

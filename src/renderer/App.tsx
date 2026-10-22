@@ -100,6 +100,12 @@ export function App() {
       const loaded = await window.spindle.settings.get()
       if (cancelled) return
       setSettings(loaded)
+
+      // The main process keeps the vault open across renderer reloads, so a
+      // reload has to ask which vault it is rather than showing the picker.
+      const current = await window.spindle.vault.current()
+      if (cancelled || !current) return
+      setRoot(current)
     })()
 
     return () => {
