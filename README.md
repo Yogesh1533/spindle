@@ -182,6 +182,7 @@ src/renderer/      the React app
   store/             zustand stores
 tests/              unit tests for the pure logic
 docs/observations.md  what Spindle copied from Obsidian, and how
+docs/roadmap.md      what could come next, and why it would be worth it
 ```
 
 **The index lives in the main process**, so it survives a renderer reload and is
