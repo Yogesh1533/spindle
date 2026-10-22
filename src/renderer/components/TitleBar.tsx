@@ -1,5 +1,5 @@
 import { useVaultStore } from '../store/useVaultStore.js'
-import { IconFiles, IconGraph, IconMoon, IconSearch, IconSun } from './icons.js'
+import { IconFiles, IconGraph, IconMoon, IconSearch, IconSpindle, IconSun } from './icons.js'
 
 interface Props {
   onOpenVault: () => void
@@ -23,6 +23,11 @@ export function TitleBar({ onOpenVault }: Props) {
 
   return (
     <header className="titlebar">
+      <span className="titlebar__brand">
+        <IconSpindle size={15} className="titlebar__mark" />
+        <span className="titlebar__name">Spindle</span>
+      </span>
+      {root && <span className="titlebar__sep">/</span>}
       <span className="titlebar__title">{vaultName}</span>
       <div className="titlebar__spacer" />
 

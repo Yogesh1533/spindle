@@ -19,7 +19,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "dist:mac": "npm run build && electron-builder --mac --dir",
-    "dist:mac:dmg": "npm run build && electron-builder --mac"
+    "dist:mac:dmg": "npm run build && electron-builder --mac",
+    "icon": "scripts/build-icon.sh"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.4",
@@ -58,6 +59,7 @@
   "build": {
     "appId": "app.spindle.notes",
     "productName": "Spindle",
+    "icon": "build/icon.png",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -67,6 +69,7 @@
       "package.json"
     ],
     "mac": {
+      "icon": "build/icon.icns",
       "category": "public.app-category.productivity",
       "target": [
         "dmg"

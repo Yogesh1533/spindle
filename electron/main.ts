@@ -7,6 +7,7 @@
 
 import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, shell } from 'electron'
 import path from 'node:path'
+import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { IPC } from '../src/shared/ipc-contract.js'
 import { createResolver, rewriteLinkTargets } from '../src/shared/links.js'
@@ -30,6 +31,10 @@ import {
 import { VaultWatcher } from './watcher.js'
 
 const __dirname_ = path.dirname(fileURLToPath(import.meta.url))
+
+// The name the app calls itself: the dock, the application menu and the
+// window title all read from this.
+app.setName('Spindle')
 
 let mainWindow: BrowserWindow | null = null
 let indexer = new VaultIndexer()
@@ -60,12 +65,27 @@ function pushSettings(): void {
 // Window
 // ---------------------------------------------------------------------------
 
+/**
+ * The dock, in a development run.
+ *
+ * A packaged app carries its own icon and name in the bundle, but a
+ * development run is the bare Electron binary, which would otherwise put
+ * Electron's icon and name in the dock.
+ */
+function applyDockBranding(): void {
+  if (process.platform !== 'darwin' || !app.dock) return
+  if (app.isPackaged) return
+  const icon = path.join(__dirname_, '..', '..', 'build', 'icon.png')
+  if (existsSync(icon)) app.dock.setIcon(icon)
+}
+
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 840,
     minWidth: 900,
     minHeight: 600,
+    title: 'Spindle',
     titleBarStyle: 'hiddenInset',
     backgroundColor: nativeTheme.shouldUseDarkColors ? '#1e1e21' : '#ffffff',
     webPreferences: {
@@ -605,6 +625,7 @@ void app.whenReady().then(async () => {
 
   registerIpc()
   buildMenu()
+  applyDockBranding()
   createWindow()
 
   // Reopen the last vault.

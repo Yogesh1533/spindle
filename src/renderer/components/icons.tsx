@@ -227,3 +227,31 @@ export const IconPin = (p: IconProps) => (
     <path d="M9.5 1.8 14.2 6.5l-2.4.6-2.6 2.6.6 2.4-1.1 1.1-3.4-3.4-3.4 3.4-1.1-1.1 3.4-3.4L.8 3.3l1.1-1.1 2.4.6 2.6-2.6z" />
   </Icon>
 )
+
+/**
+ * Spindle's own mark: a drop spindle with a thread wound round it.
+ *
+ * The same drawing as the application icon, reduced to what still reads at
+ * sixteen pixels — the lens-shaped whorl, the rod through it, and one turn
+ * of the thread.
+ */
+export const IconSpindle = ({ size = 16, ...props }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 16 16"
+    fill="none"
+    {...props}
+  >
+    <path
+      d="M8 0.8C9.2 3.6 11.3 5.2 11.3 8s-2.1 4.4-3.3 7.2C6.8 12.4 4.7 10.8 4.7 8S6.8 3.6 8 0.8Z"
+      fill="currentColor"
+    />
+    <path
+      d="M2.4 10.3C4.8 7.5 8.7 6.3 13.6 6.5"
+      stroke="var(--accent)"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+    />
+  </svg>
+)

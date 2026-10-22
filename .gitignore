@@ -4,3 +4,7 @@ release/
 *.log
 .DS_Store
 .vite/
+
+# The icon sources and the built .icns are kept — electron-builder needs
+# them — but the intermediate icon set is not.
+build/*.iconset/

@@ -50,6 +50,14 @@ npm run dist:mac:dmg     # a .dmg in release/
 npm run dist:mac          # an unpacked .app in release/ (faster, for testing)
 ```
 
+The packaged app is `Spindle.app`: the dock, the application menu and the
+window title all say **Spindle**, and the dock carries Spindle's own icon.
+
+> A development run (`npm run dev`) is the bare Electron binary, so macOS
+> still calls it Electron in the dock — the name and the icon live in the
+> application bundle, and only a packaged build has one. Run
+> `npm run dist:mac` to get it.
+
 ### Other scripts
 
 | Command | What it does |
@@ -57,6 +65,7 @@ npm run dist:mac          # an unpacked .app in release/ (faster, for testing)
 | `npm test` | Runs the unit tests (vitest) |
 | `npm run test:watch` | The same, in watch mode |
 | `npm run typecheck` | `tsc --noEmit` over the whole project |
+| `npm run icon` | Redraws the logo and rebuilds `build/icon.icns` |
 | `node scripts/make-sample-vault.mjs` | Writes a sample vault to `~/Documents/Spindle Sample Vault` |
 
 ---
@@ -189,6 +198,7 @@ src/renderer/      the React app
   editor/            CodeMirror 6, and the live-preview extension
   components/        explorer, editor area, graph, dialogs, settings
   store/             zustand stores
+build/              the logo: the SVG it is drawn from, and the .icns
 tests/              unit tests for the pure logic
 docs/observations.md  what Spindle copied from Obsidian, and how
 docs/roadmap.md      what could come next, and why it would be worth it
@@ -223,6 +233,25 @@ to keep in sync.
   every platform.
 - Writes are atomic (write to a temporary file, then rename).
 - Files changed outside the app appear live, without a restart.
+
+### The logo
+
+Spindle's mark is a **drop spindle** — the tapered tool that twists thread —
+with a single thread wound around it. It reads two ways: a spindle holds the
+thread together, and a spindle is also the hub of a wheel, which is what a
+note's links make it.
+
+The logo is drawn from scratch as vector paths in `scripts/make-icon.mjs`.
+That script writes the SVG; the SVG is rasterised with the browser engine
+Electron is built on, and the `.icns` is assembled with the macOS tools:
+
+```bash
+npm run icon               # redraw, rasterise, and rebuild build/icon.icns
+npm run icon -- dark       # the dark-ground version
+```
+
+The smaller mark used in the title bar is a hand-drawn reduction of the same
+shape, in `src/renderer/components/icons.tsx`.
 
 ### Clean-room
 
@@ -306,6 +335,7 @@ observed and how confident we are about it are written up in
 - [x] Status bar with word count, file and cursor position
 - [x] Resizable sidebars
 - [x] Application menu with the main shortcuts
+- [x] Its own name and icon — the dock, the application menu and the window title all say Spindle
 - [x] Remembers the open notes, per vault, and restores them after a reload
 
 **Not yet done**
