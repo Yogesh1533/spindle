@@ -1,4 +1,4 @@
-# Slate — Plan
+# Spindle — Plan
 
 A local-first Markdown note-taking app for plain-text folders ("vaults"). Clean-room
 implementation: Obsidian is used only as a **behavioural reference** (layout, shortcuts,
@@ -95,10 +95,10 @@ Syntax is hidden via `Decoration.replace` on the marker ranges; styles via
 ## 3. Folder structure
 
 ```
-slate/
+spindle/
 ├── electron/
 │   ├── main.ts              # app lifecycle, BrowserWindow
-│   ├── preload.ts           # contextBridge → window.slate API
+│   ├── preload.ts           # contextBridge → window.spindle API
 │   ├── ipc.ts               # typed IPC handlers
 │   ├── vault.ts             # vault model: tree, read, write, rename, create
 │   ├── watcher.ts           # chokidar
@@ -133,7 +133,7 @@ slate/
 ## 4. Vault compatibility rules
 
 - A vault = a folder. Non-`.md` files are listed but not indexed.
-- We **never** write into the vault beyond the user's own notes — Slate's own
+- We **never** write into the vault beyond the user's own notes — Spindle's own
   settings live in the OS user-data directory, outside the vault. No
   migration, no reformatting.
 - Reading is always UTF-8; writes preserve existing content byte-for-byte
@@ -196,7 +196,7 @@ Unit tests (vitest, no Electron) for the pure logic:
 | Editor | CodeMirror 6, source-based live preview | Exact text positions, robust, no contenteditable drift. |
 | Live preview | Decorations over source text | Same model as source mode; toggling is instant; no dual state. |
 | Graph | `d3-force` + SVG | Small dep, full control, no canvas/React wrapper mismatch. |
-| Config storage | `app.getPath('userData')` | Keeps the vault pristine — only `.slate/` is ever written inside it. |
+| Config storage | `app.getPath('userData')` | Keeps the vault pristine — nothing is ever written inside it. |
 | IPC | Typed `invoke`/`on` contract in `src/shared` | Single source of truth for both sides. |
 
 ---

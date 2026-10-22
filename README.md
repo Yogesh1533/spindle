@@ -1,8 +1,8 @@
-# Slate
+# Spindle
 
 A local-first Markdown note-taking app for plain-text folders.
 
-Slate treats any folder of `.md` files as a **vault** and works on the files in
+Spindle treats any folder of `.md` files as a **vault** and works on the files in
 place. It never converts, migrates or reformats anything: open an existing
 Obsidian vault, edit a note, close the app, and the file on disk is exactly the
 Markdown you wrote.
@@ -57,7 +57,7 @@ npm run dist:mac          # an unpacked .app in release/ (faster, for testing)
 | `npm test` | Runs the unit tests (vitest) |
 | `npm run test:watch` | The same, in watch mode |
 | `npm run typecheck` | `tsc --noEmit` over the whole project |
-| `node scripts/make-sample-vault.mjs` | Writes a sample vault to `~/Documents/Slate Sample Vault` |
+| `node scripts/make-sample-vault.mjs` | Writes a sample vault to `~/Documents/Spindle Sample Vault` |
 
 ---
 
@@ -99,7 +99,7 @@ The folder is opened in place — pick any folder of Markdown files.
 
 ### Markdown
 
-Slate reads and writes standard Markdown, and renders it inline as you type
+Spindle reads and writes standard Markdown, and renders it inline as you type
 ("reading view"). The source is still plain text underneath, so every keystroke
 maps to a real character position.
 
@@ -138,9 +138,27 @@ A template can contain `{{date}}`, `{{date:YYYY-MM-DD}}`, `{{title}}` and
 
 ### Graph view
 
-`Cmd+G` opens a force-directed graph of the vault. Drag to pan, scroll to zoom,
-click a node to open the note. The toolbar can filter by tag or folder, show
-only the local neighbourhood of the current note, and show unresolved links.
+`Cmd+G` opens a force-directed graph of the vault.
+
+| Action | How |
+|--------|-----|
+| Pan | Drag the background |
+| Zoom | Scroll, or the buttons in the corner |
+| Zoom to the pointer | Scrolling keeps the point under the cursor still |
+| Open a note | Click a node |
+| Inspect a note | Double-click a node — a panel shows its links, backlinks and tags |
+| Move a note | Drag it. It stays where you put it, marked as pinned, until you unpin it |
+| Fit the graph on screen | `F`, or the ⛶ button |
+| Filter the graph | Type in the box at the top; matching notes are highlighted, the rest dimmed |
+| Local graph | `L`, or the **Local graph** button — then choose how many hops to include |
+| Filter by tag or folder | The two dropdowns; a tag in the inspector filters the graph by it |
+| See missing notes | **Unresolved** adds placeholders for links that point at notes that do not exist yet |
+| Move between notes | Arrow keys, then `Enter` to open |
+| Clear | `Esc` |
+
+Edges carry an arrow, so the direction of a link is visible. When a note is
+selected, the edges leaving it are drawn in the accent colour and the edges
+arriving at it in blue.
 
 ---
 
@@ -163,7 +181,7 @@ src/renderer/      the React app
   components/        explorer, editor area, graph, dialogs, settings
   store/             zustand stores
 tests/              unit tests for the pure logic
-docs/observations.md  what Slate copied from Obsidian, and how
+docs/observations.md  what Spindle copied from Obsidian, and how
 ```
 
 **The index lives in the main process**, so it survives a renderer reload and is
@@ -262,12 +280,15 @@ observed and how confident we are about it are written up in
 
 **Graph view**
 - [x] Force-directed layout
-- [x] Zoom and pan
+- [x] Zoom (to the pointer) and pan
 - [x] Click a node to open the note
-- [x] Local graph of the current note
+- [x] Double-click a node to inspect it — its links out, its backlinks and its tags
+- [x] Drag a node to move it, and pin it where you put it
+- [x] Local graph, with a configurable number of hops
 - [x] Filter by tag or folder
 - [x] Show or hide unresolved links
-- [x] Search within the graph
+- [x] Search, which highlights matching notes rather than hiding the rest
+- [x] Fit the graph on screen, and keyboard navigation
 
 **Interface**
 - [x] Light and dark themes, following the system by default
@@ -295,7 +316,7 @@ our own — the vault stays plain Markdown.
 ## Development
 
 ```bash
-npm test          # 100 unit tests
+npm test          # 105 unit tests
 npm run typecheck
 npm run dev       # hot-reloading development
 ```
@@ -328,7 +349,7 @@ scripts/verify-all.sh     # run every check and print a summary
 Or one at a time:
 
 ```bash
-WS=$(sed 's/^WS=//' /tmp/slate.ws)
+WS=$(sed 's/^WS=//' /tmp/spindle.ws)
 node scripts/cdp-probe.mjs "$WS" scripts/verify-features.js
 ```
 
