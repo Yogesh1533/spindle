@@ -254,7 +254,7 @@ interface LineInfo {
 }
 
 /** Split the document into lines, tracking code-fence and table state. */
-function scanLines(text: string): LineInfo[] {
+export function scanLines(text: string): LineInfo[] {
   const lines: LineInfo[] = []
   const rawLines = text.split('\n')
   let offset = 0
@@ -278,7 +278,10 @@ function scanLines(text: string): LineInfo[] {
       start: offset,
       end: offset + lineText.length,
       text: lineText,
-      inCode: inFence,
+      // The fence line itself belongs to the block it opens or closes, so
+      // that its markers are hidden in preview mode too — otherwise the
+      // closing ``` would be left sitting under the code.
+      inCode: inFence || fenceMatch !== null,
       inTable: false,
     })
 

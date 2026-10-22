@@ -22,7 +22,7 @@
   }
 
   // ---- Open the vault ----
-  await window.slate.vault.open('/Users/yogesh/Documents/Slate Sample Vault')
+  await window.spindle.vault.open('/Users/yogesh/Documents/Spindle Sample Vault')
   await wait(1800)
 
   // Start from a known state: a previous check may have left the graph
@@ -63,24 +63,69 @@
   check('tab reflects the open note', activeTabName() === 'Welcome.md', activeTabName())
 
   // ---- Live preview decorations ----
-  check('headings styled', count('.cm-md-heading') > 0, String(count('.cm-md-heading')))
-  check('wikilinks styled', count('.cm-md-link') > 0, String(count('.cm-md-link')))
-  check('tags styled', count('.cm-md-tag') > 0, String(count('.cm-md-tag')))
-  check('bold styled', count('.cm-md-bold') > 0, String(count('.cm-md-bold')))
-  check('list markers styled', count('.cm-md-list-marker') > 0, String(count('.cm-md-list-marker')))
-  check('task checkboxes', count('.cm-md-checkbox') > 0, String(count('.cm-md-checkbox')))
-  check('tables styled', count('.cm-md-table-line') > 0, String(count('.cm-md-table-line')))
-  check('code fences styled', count('.cm-md-codeblock-line') > 0, String(count('.cm-md-codeblock-line')))
-  check('blockquotes styled', count('.cm-md-quote-line') > 0, String(count('.cm-md-quote-line')))
-  check('frontmatter styled', count('.cm-md-frontmatter-line') > 0, String(count('.cm-md-frontmatter-line')))
+  //
+  // CodeMirror only renders the live-preview decorations for the part of the
+  // note that is on screen, so the note is scrolled through before the
+  // decorations are counted. Each class is counted at both ends of the note
+  // and the larger count is used.
+  const scrollEditor = async (where) => {
+    const scroller = $('.cm-scroller')
+    if (!scroller) return
+    scroller.scrollTop = where === 'bottom' ? scroller.scrollHeight : 0
+    scroller.dispatchEvent(new Event('scroll'))
+    await wait(400)
+  }
+
+  const DECORATIONS = [
+    'cm-md-heading',
+    'cm-md-link',
+    'cm-md-tag',
+    'cm-md-bold',
+    'cm-md-list-marker',
+    'cm-md-checkbox',
+    'cm-md-table-line',
+    'cm-md-codeblock-line',
+    'cm-md-quote-line',
+    'cm-md-frontmatter-line',
+  ]
+
+  const decorationCounts = async () => {
+    const best = {}
+    for (const where of ['top', 'bottom']) {
+      await scrollEditor(where)
+      for (const name of DECORATIONS) {
+        best[name] = Math.max(best[name] ?? 0, count('.' + name))
+      }
+    }
+    await scrollEditor('top')
+    return best
+  }
+
+  const deco = await decorationCounts()
+  check('headings styled', deco['cm-md-heading'] > 0, String(deco['cm-md-heading']))
+  check('wikilinks styled', deco['cm-md-link'] > 0, String(deco['cm-md-link']))
+  check('tags styled', deco['cm-md-tag'] > 0, String(deco['cm-md-tag']))
+  check('bold styled', deco['cm-md-bold'] > 0, String(deco['cm-md-bold']))
+  check('list markers styled', deco['cm-md-list-marker'] > 0, String(deco['cm-md-list-marker']))
+  check('task checkboxes', deco['cm-md-checkbox'] > 0, String(deco['cm-md-checkbox']))
+  check('tables styled', deco['cm-md-table-line'] > 0, String(deco['cm-md-table-line']))
+  check('code fences styled', deco['cm-md-codeblock-line'] > 0, String(deco['cm-md-codeblock-line']))
+  check('blockquotes styled', deco['cm-md-quote-line'] > 0, String(deco['cm-md-quote-line']))
+  check('frontmatter styled', deco['cm-md-frontmatter-line'] > 0, String(deco['cm-md-frontmatter-line']))
 
   // Raw markers must be hidden in preview mode.
   const text = cm.textContent || ''
   check('wikilink brackets hidden', !text.includes('[['), 'brackets visible')
   check('heading hashes hidden', !/^#{1,6} /m.test(text), 'hashes visible')
   check('bold asterisks hidden', !text.includes('**'), 'asterisks visible')
+
+  // The code block is at the bottom of the note; both fences must be hidden.
+  await scrollEditor('bottom')
+  const bottomText = $('.cm-content')?.textContent || ''
+  check('code fence markers hidden', !bottomText.includes('```'), bottomText.slice(-60))
+  await scrollEditor('top')
   // The tag pill keeps its '#', so check the *markup* form is gone instead.
-  const raw = await window.slate.file.read('Welcome.md')
+  const raw = await window.spindle.file.read('Welcome.md')
   check('source really contains a #tag', raw.includes('#daily'), 'no #daily in source')
   check('tag pill renders the #', $$('.cm-md-tag').some((e) => e.textContent.startsWith('#')), $$('.cm-md-tag').map((e) => e.textContent).join('|'))
 
@@ -165,10 +210,10 @@
   // with "Untitled 1.md", "Untitled 2.md" and so on.
   const newTab = $('.tab.is-active .tab__name')?.textContent ?? ''
   if (/^Untitled/.test(newTab)) {
-    const paths = await window.slate.links.allPaths()
+    const paths = await window.spindle.links.allPaths()
     const created = paths.find((p) => p.split('/').pop() === newTab)
     if (created) {
-      await window.slate.file.remove(created).catch(() => {})
+      await window.spindle.file.remove(created).catch(() => {})
       await wait(600)
     }
   }

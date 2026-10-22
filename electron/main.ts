@@ -72,6 +72,13 @@ function createWindow(): void {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      // Chromium throttles timers and animations in a window that is not in
+      // front, which leaves the app half-frozen while it is in the
+      // background: the graph stops laying itself out and the editor stops
+      // painting the part of the note that is scrolled off the top. A note
+      // app is expected to keep working while you are looking at something
+      // else, so the throttling is turned off.
+      backgroundThrottling: false,
     },
   })
 
@@ -542,7 +549,7 @@ function send(channel: string, payload: string): void {
 /**
  * Tell the renderer that the vault changed on disk.
  *
- * Writes that Slate makes itself are marked as self-writes so the watcher
+ * Writes that Spindle makes itself are marked as self-writes so the watcher
  * ignores its own echo — but that also means the renderer never hears
  * about them. Every mutation therefore announces itself, so the file tree
  * stays in step with what is actually on disk.
