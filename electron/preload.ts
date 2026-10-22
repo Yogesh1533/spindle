@@ -5,7 +5,7 @@
 
 import { contextBridge, ipcRenderer } from 'electron'
 import { IPC } from '../src/shared/ipc-contract.js'
-import type { AppSettings, FileChangeEvent } from '../src/shared/types.js'
+import type { AppSettings, FileChangeEvent, TabSession } from '../src/shared/types.js'
 
 const api = {
   vault: {
@@ -16,6 +16,11 @@ const api = {
     indexSnapshot: () => ipcRenderer.invoke(IPC.getIndexSnapshot),
     current: () => ipcRenderer.invoke(IPC.getCurrentVault),
     close: () => ipcRenderer.invoke(IPC.closeVault),
+  },
+  session: {
+    get: (root: string) => ipcRenderer.invoke(IPC.getSession, root),
+    set: (root: string, session: TabSession) =>
+      ipcRenderer.invoke(IPC.setSession, root, session),
   },
   file: {
     read: (path: string) => ipcRenderer.invoke(IPC.readFile, path),

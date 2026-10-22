@@ -11,9 +11,10 @@ import { fileURLToPath } from 'node:url'
 import { IPC } from '../src/shared/ipc-contract.js'
 import { createResolver, rewriteLinkTargets } from '../src/shared/links.js'
 import { applyTemplateTokens, formatDate } from '../src/shared/dates.js'
-import type { AppSettings, FileChangeEvent, SearchResult } from '../src/shared/types.js'
+import type { AppSettings, FileChangeEvent, SearchResult, TabSession } from '../src/shared/types.js'
 import { VaultIndexer, type IndexSnapshot } from './indexer.js'
 import { readSettings, writeSettings } from './settings.js'
+import { readSession, writeSession } from './session.js'
 import {
   createFolder,
   createNote,
@@ -184,6 +185,37 @@ function registerIpc(): void {
   // crash recovery) has to be able to ask, because the main process keeps
   // the vault open across renderer reloads.
   ipcMain.handle(IPC.getCurrentVault, () => currentRoot)
+
+  // --- Tab session ---
+
+  ipcMain.handle(IPC.getSession, async (_e, root: string): Promise<TabSession | null> => {
+    const session = await readSession(root)
+    if (!session) return null
+
+    // A note may have been deleted since the session was saved, so the
+    // tabs that point at nothing are dropped.
+    const paths = [...session.tabs, ...session.splitTabs].map((t) => t.path)
+    const present = await Promise.all(paths.map((p) => exists(root, p)))
+    const known = new Set(paths.filter((_, i) => present[i]))
+
+    const tabs = session.tabs.filter((t) => known.has(t.path))
+    const splitTabs = session.splitTabs.filter((t) => known.has(t.path))
+    const activeTab =
+      session.activeTab && known.has(session.activeTab)
+        ? session.activeTab
+        : (tabs[0]?.path ?? null)
+    const activeSplit =
+      session.activeSplit && known.has(session.activeSplit)
+        ? session.activeSplit
+        : (splitTabs[0]?.path ?? null)
+
+    return { tabs, splitTabs, activeTab, activeSplit }
+  })
+
+  ipcMain.handle(IPC.setSession, async (_e, root: string, session: TabSession) => {
+    await writeSession(root, session)
+    return true
+  })
 
   ipcMain.handle(IPC.closeVault, async () => {
     await watcher.stop()

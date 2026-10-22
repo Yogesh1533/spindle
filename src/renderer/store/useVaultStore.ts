@@ -12,6 +12,7 @@ import {
   type FileChangeEvent,
   type LinkRef,
   type NoteMeta,
+  type TabSession,
   type TagInfo,
   type TreeNode,
   type ViewMode,
@@ -78,6 +79,9 @@ export interface VaultState {
   setViewMode: (mode: ViewMode) => void
   toggleViewMode: () => void
   renameTab: (from: string, to: string) => void
+
+  /** Replace the open tabs with a saved session (or clear them with null). */
+  setSession: (session: TabSession | null) => void
 
   setSettings: (patch: Partial<AppSettings>) => void
   setRightPane: (pane: RightPane) => void
@@ -192,6 +196,14 @@ export const useVaultStore = create<VaultState>((set, get) => ({
       activeTab: state.activeTab === from ? to : state.activeTab,
       activeSplit: state.activeSplit === from ? to : state.activeSplit,
     })),
+
+  setSession: (session) =>
+    set({
+      tabs: session?.tabs.map((t) => ({ path: t.path, mode: t.mode })) ?? [],
+      activeTab: session?.activeTab ?? null,
+      splitTabs: session?.splitTabs.map((t) => ({ path: t.path, mode: t.mode })) ?? [],
+      activeSplit: session?.activeSplit ?? null,
+    }),
 
   setSettings: (patch) => set((state) => ({ settings: { ...state.settings, ...patch } })),
 

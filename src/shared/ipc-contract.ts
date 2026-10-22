@@ -13,6 +13,10 @@ export const IPC = {
   getCurrentVault: 'vault:current',
   closeVault: 'vault:close',
 
+  // Tab session — which notes were open, per vault
+  getSession: 'session:get',
+  setSession: 'session:set',
+
   // Files
   readFile: 'file:read',
   writeFile: 'file:write',

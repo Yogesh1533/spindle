@@ -195,6 +195,19 @@ export interface OpenFile {
   mode: ViewMode
 }
 
+/**
+ * Which notes were open, and in which pane.
+ *
+ * Kept per vault, outside the vault, so that a renderer reload — with
+ * Cmd+R, or after a crash — comes back with the same notes open.
+ */
+export interface TabSession {
+  tabs: { path: string; mode: ViewMode | null }[]
+  activeTab: string | null
+  splitTabs: { path: string; mode: ViewMode | null }[]
+  activeSplit: string | null
+}
+
 /** Payload sent when a file changes on disk. */
 export interface FileChangeEvent {
   type: 'add' | 'change' | 'unlink' | 'addDir' | 'unlinkDir' | 'rename'

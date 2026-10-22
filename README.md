@@ -160,6 +160,14 @@ Edges carry an arrow, so the direction of a link is visible. When a note is
 selected, the edges leaving it are drawn in the accent colour and the edges
 arriving at it in blue.
 
+### Coming back to the same place
+
+Spindle remembers which notes were open, in which pane, for each vault — so
+reloading the window (`Cmd+R`), or restarting the app, brings back the same
+tabs. The session is kept outside the vault, in the app's own settings
+folder, one per vault: opening a different vault shows that vault's tabs, not
+the ones you left behind.
+
 ---
 
 ## How it is put together
@@ -171,6 +179,7 @@ electron/          the main process
   watcher.ts         chokidar, with our own writes filtered out
   indexer.ts         the in-memory index: notes, links, tags, headings
   settings.ts        app settings, stored outside the vault
+  session.ts         the open tabs, per vault, also stored outside it
 src/shared/         types and helpers used by both processes
   ipc-contract.ts    the channel names, shared so they cannot drift
   dates.ts           daily-note date and template formatting
@@ -297,6 +306,7 @@ observed and how confident we are about it are written up in
 - [x] Status bar with word count, file and cursor position
 - [x] Resizable sidebars
 - [x] Application menu with the main shortcuts
+- [x] Remembers the open notes, per vault, and restores them after a reload
 
 **Not yet done**
 - [ ] Canvas / whiteboard

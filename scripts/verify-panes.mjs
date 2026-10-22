@@ -79,6 +79,18 @@ ws.onopen = async () => {
     await evaluate(`window.spindle.vault.open(${JSON.stringify(VAULT)})`)
     await sleep(2000)
 
+    // The app remembers which notes were open, so the vault comes back with
+    // the last session's tabs in it. Close them, so the check starts from a
+    // known state.
+    await evaluate(`
+      (() => {
+        const closes = [...document.querySelectorAll('.tab__close')]
+        closes.forEach((c) => c.click())
+        return closes.length
+      })()
+    `)
+    await sleep(900)
+
     // ---- 1. A split pane opens ----
     await evaluate(openNote('Welcome.md'))
     await sleep(1200)
