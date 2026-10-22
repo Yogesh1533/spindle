@@ -1,5 +1,5 @@
 /**
- * Slate's icon set.
+ * Spindle's icon set.
  *
  * Original drawings — simple 16px stroke icons drawn for this project.
  * Not derived from any other application's assets.
@@ -206,5 +206,24 @@ export const IconRefresh = (p: IconProps) => (
   <Icon {...p}>
     <path d="M13 8a5 5 0 1 1-1.6-3.7" />
     <path d="M13.2 2.5V5h-2.5" />
+  </Icon>
+)
+
+export const IconFit = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M2.5 6V2.5H6M10 2.5h3.5V6M13.5 10v3.5H10M6 13.5H2.5V10" />
+  </Icon>
+)
+
+export const IconCentre = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="8" cy="8" r="3" />
+    <path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2" />
+  </Icon>
+)
+
+export const IconPin = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M9.5 1.8 14.2 6.5l-2.4.6-2.6 2.6.6 2.4-1.1 1.1-3.4-3.4-3.4 3.4-1.1-1.1 3.4-3.4L.8 3.3l1.1-1.1 2.4.6 2.6-2.6z" />
   </Icon>
 )

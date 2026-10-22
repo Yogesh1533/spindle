@@ -47,7 +47,7 @@ export function SettingsModal() {
     }
     if (Object.keys(patch).length > 0) {
       setSettings(patch)
-      await window.slate.settings.set(patch)
+      await window.spindle.settings.set(patch)
     }
     setOpen(false)
   }

@@ -35,7 +35,7 @@ export function App() {
 
   const refreshTree = useCallback(async () => {
     try {
-      const tree = await window.slate.vault.tree()
+      const tree = await window.spindle.vault.tree()
       setTree(tree)
     } catch {
       setTree([])
@@ -44,7 +44,7 @@ export function App() {
 
   const refreshIndex = useCallback(async () => {
     try {
-      const snapshot = await window.slate.vault.indexSnapshot()
+      const snapshot = await window.spindle.vault.indexSnapshot()
       setIndex(snapshot)
       setIndexing(false)
     } catch {
@@ -63,7 +63,7 @@ export function App() {
     const editor = useEditorStore.getState()
     if (editor.isDirty(path)) return
     try {
-      const content = await window.slate.file.read(path)
+      const content = await window.spindle.file.read(path)
       editor.setSaved(path, content)
       editor.setContent(path, content)
     } catch {
@@ -75,29 +75,29 @@ export function App() {
   useEffect(() => {
     let cancelled = false
 
-    const offVault = window.slate.on.vaultChanged((nextRoot) => {
+    const offVault = window.spindle.on.vaultChanged((nextRoot) => {
       if (cancelled) return
       setRoot(nextRoot)
     })
-    const offIndex = window.slate.on.indexUpdated(() => {
+    const offIndex = window.spindle.on.indexUpdated(() => {
       if (!cancelled) void refreshIndex()
     })
-    const offFile = window.slate.on.fileChanged((event) => {
+    const offFile = window.spindle.on.fileChanged((event) => {
       if (cancelled) return
       handleFileChange(event)
       void refreshTree()
       if (event.type === 'change' || event.type === 'add') void reloadFromDisk(event.path)
     })
-    const offSettings = window.slate.on.settingsChanged((next) => {
+    const offSettings = window.spindle.on.settingsChanged((next) => {
       if (!cancelled) setSettings(next)
     })
-    const offCommand = window.slate.on.command((command) => {
+    const offCommand = window.spindle.on.command((command) => {
       if (cancelled) return
-      window.dispatchEvent(new CustomEvent('slate:command', { detail: command }))
+      window.dispatchEvent(new CustomEvent('spindle:command', { detail: command }))
     })
 
     void (async () => {
-      const loaded = await window.slate.settings.get()
+      const loaded = await window.spindle.settings.get()
       if (cancelled) return
       setSettings(loaded)
     })()
@@ -126,9 +126,9 @@ export function App() {
   useCommands({ onToast: setToast })
 
   const handleOpenVault = useCallback(async () => {
-    const picked = await window.slate.vault.pickFolder()
+    const picked = await window.spindle.vault.pickFolder()
     if (!picked) return
-    const result = await window.slate.vault.open(picked)
+    const result = await window.spindle.vault.open(picked)
     if (!result.ok) {
       setToast(result.error ?? 'Could not open that folder.')
     }
@@ -143,8 +143,14 @@ export function App() {
             <Ribbon />
             {settings.showFileExplorer && <FileExplorer />}
             <main className="main">
-              <EditorArea />
-              <StatusBar />
+              {graphOpen ? (
+                <GraphView />
+              ) : (
+                <>
+                  <EditorArea />
+                  <StatusBar />
+                </>
+              )}
             </main>
             {settings.showRightSidebar && !graphOpen && <RightSidebar />}
           </>
@@ -152,8 +158,6 @@ export function App() {
           <VaultPicker onOpenVault={handleOpenVault} />
         )}
       </div>
-
-      {graphOpen && <GraphView />}
 
       <QuickSwitcher />
       <CommandPalette />

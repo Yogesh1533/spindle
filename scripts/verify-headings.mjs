@@ -5,7 +5,7 @@
  * Usage: node scripts/verify-headings.mjs <ws-url> [vault-path]
  */
 const wsUrl = process.argv[2]
-const VAULT = process.argv[3] ?? '/Users/yogesh/Documents/Slate Sample Vault'
+const VAULT = process.argv[3] ?? '/Users/yogesh/Documents/Spindle Sample Vault'
 
 if (!wsUrl) {
   console.error('Usage: node scripts/verify-headings.mjs <ws-url> [vault-path]')
@@ -69,7 +69,7 @@ const caret = `(() => {
 
 ws.onopen = async () => {
   try {
-    await evaluate(`window.slate.vault.open(${JSON.stringify(VAULT)})`)
+    await evaluate(`window.spindle.vault.open(${JSON.stringify(VAULT)})`)
     await sleep(2000)
 
     // A previous check may have left the graph open, which hides the

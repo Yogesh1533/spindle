@@ -186,8 +186,8 @@ export function NoteEditor({
         return
       }
     }
-    window.addEventListener('slate:goto-heading', onGoto)
-    return () => window.removeEventListener('slate:goto-heading', onGoto)
+    window.addEventListener('spindle:goto-heading', onGoto)
+    return () => window.removeEventListener('spindle:goto-heading', onGoto)
   }, [])
 
   return <div className="editor" ref={hostRef} />

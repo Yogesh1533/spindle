@@ -4,7 +4,7 @@
  * Watches the vault folder and reports adds/changes/deletes so the index and
  * the UI stay in sync with edits made outside the app.
  *
- * Writes made *by* Slate are also seen by the watcher, so we keep a short
+ * Writes made *by* Spindle are also seen by the watcher, so we keep a short
  * lived registry of paths we just wrote and ignore the resulting echo.
  */
 
@@ -39,7 +39,7 @@ export class VaultWatcher {
         const name = path.basename(filePath)
         // Ignore our own settings folder and other apps' hidden folders.
         if (name.startsWith('.')) return true
-        return filePath.includes('.slate-tmp-')
+        return filePath.includes('.spindle-tmp-')
       },
       awaitWriteFinish: {
         stabilityThreshold: 120,

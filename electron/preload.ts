@@ -1,6 +1,6 @@
 /**
  * Preload script — the only bridge between the renderer and Node.
- * Exposes a narrow, typed API on window.slate. No Node internals leak through.
+ * Exposes a narrow, typed API on window.spindle. No Node internals leak through.
  */
 
 import { contextBridge, ipcRenderer } from 'electron'
@@ -91,6 +91,6 @@ const api = {
   },
 }
 
-export type SlateApi = typeof api
+export type SpindleApi = typeof api
 
-contextBridge.exposeInMainWorld('slate', api)
+contextBridge.exposeInMainWorld('spindle', api)

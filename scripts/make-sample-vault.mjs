@@ -3,7 +3,7 @@
  *
  * Usage: node scripts/make-sample-vault.mjs [target-folder] [--keep]
  *
- * The generated vault exercises every feature Slate supports: frontmatter,
+ * The generated vault exercises every feature Spindle supports: frontmatter,
  * wikilinks, aliases, heading links, embeds, tags, tables, task lists and
  * code blocks.
  *
@@ -20,7 +20,7 @@ const args = process.argv.slice(2)
 const keep = args.includes('--keep')
 const target = path.resolve(
   args.find((a) => !a.startsWith('--')) ??
-    path.join(os.homedir(), 'Documents', 'Slate Sample Vault')
+    path.join(os.homedir(), 'Documents', 'Spindle Sample Vault')
 )
 
 const files = {
@@ -28,13 +28,13 @@ const files = {
 title: Welcome
 tags:
   - index
-  - slate
+  - spindle
 created: 2026-01-15
 ---
 
-# Welcome to Slate
+# Welcome to Spindle
 
-This is a **sample vault** for testing. Slate reads and writes plain
+This is a **sample vault** for testing. Spindle reads and writes plain
 Markdown files in place — nothing is converted or migrated.
 
 Try these:
@@ -42,7 +42,7 @@ Try these:
 - [[Getting Started]] — how to use the app
 - [[Projects]] — a hub note that links outward
 - [[Meeting Notes#2026-01-20]] — a link straight to a heading
-- [[Reference|Slate Reference]] — a link with an alias
+- [[Reference|Spindle Reference]] — a link with an alias
 - #daily #sample
 
 ## What works here
@@ -72,11 +72,11 @@ tags:
 
 # Getting Started
 
-Slate is a local-first Markdown notebook.
+Spindle is a local-first Markdown notebook.
 
 ## Opening a vault
 
-Pick **Open a vault** and choose any folder. Slate treats a folder of
+Pick **Open a vault** and choose any folder. Spindle treats a folder of
 plain \`.md\` files as a vault.
 
 ## Shortcuts

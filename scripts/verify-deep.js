@@ -35,10 +35,10 @@
           ? walk(n.children ?? [], `${prefix}${n.name}/`)
           : [`${prefix}${n.name}`]
       )
-    return walk(await window.slate.vault.tree(), '')
+    return walk(await window.spindle.vault.tree(), '')
   }
 
-  await window.slate.vault.open('/Users/yogesh/Documents/Slate Sample Vault')
+  await window.spindle.vault.open('/Users/yogesh/Documents/Spindle Sample Vault')
   await wait(2000)
 
   // ---- 1. An unresolved link is styled differently ----
@@ -71,57 +71,57 @@
   const gettingStarted = (await flatTree()).find((n) => n === 'Getting Started.md')
   check('the source note exists', !!gettingStarted)
   if (gettingStarted) {
-    const welcomeBefore = await window.slate.file.read('Welcome.md')
+    const welcomeBefore = await window.spindle.file.read('Welcome.md')
     check('Welcome.md links to Getting Started', welcomeBefore.includes('[[Getting Started]]'), welcomeBefore.slice(0, 60))
 
-    await window.slate.links.updateOnRename('Getting Started.md', 'Renamed Guide.md')
-    await window.slate.file.rename('Getting Started.md', 'Renamed Guide.md')
+    await window.spindle.links.updateOnRename('Getting Started.md', 'Renamed Guide.md')
+    await window.spindle.file.rename('Getting Started.md', 'Renamed Guide.md')
     await wait(1500)
 
-    const welcomeAfter = await window.slate.file.read('Welcome.md')
+    const welcomeAfter = await window.spindle.file.read('Welcome.md')
     check('rename rewrites the link', welcomeAfter.includes('[[Renamed Guide]]'), welcomeAfter.slice(0, 120))
     check('the old link text is gone', !welcomeAfter.includes('[[Getting Started]]'), welcomeAfter.slice(0, 120))
 
     // Put it back.
-    await window.slate.links.updateOnRename('Renamed Guide.md', 'Getting Started.md')
-    await window.slate.file.rename('Renamed Guide.md', 'Getting Started.md')
+    await window.spindle.links.updateOnRename('Renamed Guide.md', 'Getting Started.md')
+    await window.spindle.file.rename('Renamed Guide.md', 'Getting Started.md')
     await wait(1500)
-    const welcomeRestored = await window.slate.file.read('Welcome.md')
+    const welcomeRestored = await window.spindle.file.read('Welcome.md')
     check('rename back restores the link', welcomeRestored.includes('[[Getting Started]]'), welcomeRestored.slice(0, 120))
   }
 
   // ---- 4. Full-text search ----
   // Filesystem watching is checked separately by scripts/verify-watch.mjs,
   // because a genuine outside edit cannot be made through the app's own IPC.
-  const hits = await window.slate.search.query({ text: 'blockquote' })
+  const hits = await window.spindle.search.query({ text: 'blockquote' })
   check('search finds a match', Array.isArray(hits) && hits.length > 0, JSON.stringify(hits).slice(0, 140))
-  const tagHits = await window.slate.search.query({ tag: 'sample' })
+  const tagHits = await window.spindle.search.query({ tag: 'sample' })
   check('search by tag returns results', Array.isArray(tagHits) && tagHits.length > 0, JSON.stringify(tagHits).slice(0, 140))
-  const noHits = await window.slate.search.query({ text: 'zzzznotfoundzzzz' })
+  const noHits = await window.spindle.search.query({ text: 'zzzznotfoundzzzz' })
   check('search with no match returns nothing', Array.isArray(noHits) && noHits.length === 0, JSON.stringify(noHits).slice(0, 100))
-  const folderHits = await window.slate.search.query({ folder: 'Daily' })
+  const folderHits = await window.spindle.search.query({ folder: 'Daily' })
   check('search can be restricted to a folder', Array.isArray(folderHits) && folderHits.length > 0, JSON.stringify(folderHits).slice(0, 140))
 
   // ---- 5. Tags index ----
-  const tags = await window.slate.search.tags()
+  const tags = await window.spindle.search.tags()
   check('tag index is populated', Array.isArray(tags) && tags.length > 0, JSON.stringify(tags).slice(0, 160))
-  const tagged = await window.slate.search.notesWithTag('sample')
+  const tagged = await window.spindle.search.notesWithTag('sample')
   check('notes-with-tag lookup works', Array.isArray(tagged) && tagged.length > 0, JSON.stringify(tagged).slice(0, 140))
 
   // ---- 6. Settings round-trip ----
-  await window.slate.settings.set({ dailyNotesFolder: 'Daily' })
-  const settings = await window.slate.settings.get()
+  await window.spindle.settings.set({ dailyNotesFolder: 'Daily' })
+  const settings = await window.spindle.settings.get()
   check('settings persist across the IPC boundary', settings.dailyNotesFolder === 'Daily', JSON.stringify(settings).slice(0, 140))
-  await window.slate.settings.set({ dailyNotesFolder: '' })
+  await window.spindle.settings.set({ dailyNotesFolder: '' })
 
   // ---- 7. Backlinks for a specific note ----
-  const backlinks = await window.slate.links.backlinks('Getting Started.md')
+  const backlinks = await window.spindle.links.backlinks('Getting Started.md')
   check('backlinks resolve for a linked note', Array.isArray(backlinks) && backlinks.length > 0, JSON.stringify(backlinks).slice(0, 160))
 
   // ---- 8. Resolving a link ----
-  const resolvedTarget = await window.slate.links.resolve('Getting Started', 'Welcome.md')
+  const resolvedTarget = await window.spindle.links.resolve('Getting Started', 'Welcome.md')
   check('a link target resolves to a path', resolvedTarget === 'Getting Started.md', String(resolvedTarget))
-  const unknownTarget = await window.slate.links.resolve('No Such Note Anywhere', 'Welcome.md')
+  const unknownTarget = await window.spindle.links.resolve('No Such Note Anywhere', 'Welcome.md')
   check('an unknown target does not resolve', !unknownTarget, String(unknownTarget))
 
   // ---- 9. Clean up after ourselves ----
@@ -129,7 +129,7 @@
   // "unresolved link" check pass for the wrong reason.
   for (const name of ['Nowhere Note.md', 'Also Missing.md']) {
     if ((await flatTree()).includes(name)) {
-      await window.slate.file.remove(name).catch(() => {})
+      await window.spindle.file.remove(name).catch(() => {})
       await wait(800)
     }
   }

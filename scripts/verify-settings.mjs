@@ -5,7 +5,7 @@
  * Usage: node scripts/verify-settings.mjs <ws-url> [vault-path]
  */
 const wsUrl = process.argv[2]
-const VAULT = process.argv[3] ?? '/Users/yogesh/Documents/Slate Sample Vault'
+const VAULT = process.argv[3] ?? '/Users/yogesh/Documents/Spindle Sample Vault'
 
 if (!wsUrl) {
   console.error('Usage: node scripts/verify-settings.mjs <ws-url> [vault-path]')
@@ -57,7 +57,7 @@ const check = (name, pass, detail) => {
 
 ws.onopen = async () => {
   try {
-    await evaluate(`window.slate.vault.open(${JSON.stringify(VAULT)})`)
+    await evaluate(`window.spindle.vault.open(${JSON.stringify(VAULT)})`)
     await sleep(2000)
 
     // ---- 1. The settings modal opens from the command palette ----
@@ -65,7 +65,7 @@ ws.onopen = async () => {
     const opened = await evaluate(`
       (() => {
         // The palette is driven through the same command bus the menu uses.
-        window.dispatchEvent(new CustomEvent('slate:command', { detail: 'ui:settings' }))
+        window.dispatchEvent(new CustomEvent('spindle:command', { detail: 'ui:settings' }))
         return true
       })()
     `)
@@ -106,30 +106,30 @@ ws.onopen = async () => {
     `)
     await sleep(900)
 
-    const stored = await evaluate(`window.slate.settings.get()`)
+    const stored = await evaluate(`window.spindle.settings.get()`)
     check('the daily-note folder is saved', stored.dailyNotesFolder === 'Journal', JSON.stringify(stored).slice(0, 140))
     check('the modal closes after saving', !(await evaluate(`!!document.querySelector('.settings')`)))
 
     // ---- 4. The daily note now lands in that folder ----
-    const daily = await evaluate(`window.slate.daily.open()`)
+    const daily = await evaluate(`window.spindle.daily.open()`)
     await sleep(1200)
     check('the daily note uses the new folder', String(daily?.path ?? '').startsWith('Journal/'), String(daily?.path))
-    const onDisk = await evaluate(`window.slate.file.read(${JSON.stringify(String(daily?.path ?? ''))}).catch(() => 'ERR')`)
+    const onDisk = await evaluate(`window.spindle.file.read(${JSON.stringify(String(daily?.path ?? ''))}).catch(() => 'ERR')`)
     check('the daily note was created', onDisk !== 'ERR' && typeof onDisk === 'string', String(onDisk).slice(0, 60))
 
     // ---- 5. Put the setting back and clean up ----
-    await evaluate(`window.slate.settings.set({ dailyNotesFolder: 'Daily' })`)
+    await evaluate(`window.spindle.settings.set({ dailyNotesFolder: 'Daily' })`)
     await sleep(400)
-    await evaluate(`window.slate.file.remove(${JSON.stringify(String(daily?.path ?? ''))}).catch(() => {})`)
+    await evaluate(`window.spindle.file.remove(${JSON.stringify(String(daily?.path ?? ''))}).catch(() => {})`)
     await sleep(600)
     // The check created a "Journal" folder. Remove it too, but only once it
     // is empty, so a folder the user made is never touched.
     await evaluate(`
       (async () => {
-        const tree = await window.slate.vault.tree()
+        const tree = await window.spindle.vault.tree()
         const journal = tree.find((n) => n.name === 'Journal' && n.isFolder)
         if (journal && (journal.children ?? []).length === 0) {
-          await window.slate.file.remove('Journal').catch(() => {})
+          await window.spindle.file.remove('Journal').catch(() => {})
         }
         return true
       })()
@@ -137,7 +137,7 @@ ws.onopen = async () => {
     await sleep(400)
 
     // ---- 6. A template is used for new daily notes ----
-    await evaluate(`window.slate.settings.set({ dailyNotesTemplate: 'Templates/Daily.md' })`)
+    await evaluate(`window.spindle.settings.set({ dailyNotesTemplate: 'Templates/Daily.md' })`)
     await sleep(600)
     // Remove today's note so the next one is created fresh from the template.
     const today = await evaluate(`
@@ -146,26 +146,26 @@ ws.onopen = async () => {
         const pad = (n) => String(n).padStart(2, '0')
         const name = d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
         const path = 'Daily/' + name + '.md'
-        await window.slate.file.remove(path).catch(() => {})
+        await window.spindle.file.remove(path).catch(() => {})
         return path
       })()
     `)
     await sleep(800)
-    const templated = await evaluate(`window.slate.daily.open()`)
+    const templated = await evaluate(`window.spindle.daily.open()`)
     await sleep(1200)
     const body = await evaluate(
-      `window.slate.file.read(${JSON.stringify(String(templated?.path ?? ''))}).catch(() => 'ERR')`
+      `window.spindle.file.read(${JSON.stringify(String(templated?.path ?? ''))}).catch(() => 'ERR')`
     )
     check('the daily note is created from the template', String(body).includes('# '), String(body).slice(0, 80))
     check('the template date token is expanded', /\d{4}-\d{2}-\d{2}/.test(String(body)), String(body).slice(0, 120))
     check('the template time token is expanded', /\d{2}:\d{2}/.test(String(body)), String(body).slice(0, 160))
     check('the template body is kept', String(body).includes('Plan the day'), String(body).slice(0, 200))
-    await evaluate(`window.slate.file.remove(${JSON.stringify(String(templated?.path ?? ''))}).catch(() => {})`)
-    await evaluate(`window.slate.settings.set({ dailyNotesTemplate: '' })`)
+    await evaluate(`window.spindle.file.remove(${JSON.stringify(String(templated?.path ?? ''))}).catch(() => {})`)
+    await evaluate(`window.spindle.settings.set({ dailyNotesTemplate: '' })`)
     await sleep(500)
 
     // ---- 6. The theme can be switched ----
-    await evaluate(`window.dispatchEvent(new CustomEvent('slate:command', { detail: 'ui:settings' }))`)
+    await evaluate(`window.dispatchEvent(new CustomEvent('spindle:command', { detail: 'ui:settings' }))`)
     await sleep(600)
     await evaluate(`
       (() => {
@@ -187,7 +187,7 @@ ws.onopen = async () => {
     await sleep(800)
     const theme = await evaluate(`document.documentElement.dataset.theme`)
     check('the dark theme applies immediately', theme === 'dark', String(theme))
-    await evaluate(`window.slate.settings.set({ theme: 'system' })`)
+    await evaluate(`window.spindle.settings.set({ theme: 'system' })`)
     await sleep(500)
 
     console.log(results.join('\n'))

@@ -18,7 +18,7 @@ export function TitleBar({ onOpenVault }: Props) {
   const toggleTheme = () => {
     const next = settings.theme === 'dark' ? 'light' : 'dark'
     setSettings({ theme: next })
-    void window.slate.settings.set({ theme: next })
+    void window.spindle.settings.set({ theme: next })
   }
 
   return (

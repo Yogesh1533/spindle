@@ -82,14 +82,14 @@ ws.onopen = async () => {
     const setup = await evaluate(`
       (async () => {
         const wait = (ms) => new Promise((r) => setTimeout(r, ms))
-        await window.slate.vault.open('/Users/yogesh/Documents/Slate Sample Vault')
+        await window.spindle.vault.open('/Users/yogesh/Documents/Spindle Sample Vault')
         await wait(2000)
         // Start from a clean scratch note every run. createNote is used
         // rather than write because the note has to be new for the app to
         // show it in the tree.
-        await window.slate.file.remove('Scratch Autocomplete.md').catch(() => {})
+        await window.spindle.file.remove('Scratch Autocomplete.md').catch(() => {})
         await wait(800)
-        await window.slate.file.createNote('Scratch Autocomplete.md', '')
+        await window.spindle.file.createNote('Scratch Autocomplete.md', '')
         await wait(1200)
         const item = [...document.querySelectorAll('.tree__name')].find((e) => e.textContent === 'Scratch Autocomplete.md')
         if (item) { item.click(); await wait(1400) }
@@ -131,7 +131,7 @@ ws.onopen = async () => {
 
     // The live preview hides "[[" from textContent, so read the buffer itself.
     const raw = await evaluate(
-      `window.slate.file.read('Scratch Autocomplete.md').catch(() => 'ERR')`
+      `window.spindle.file.read('Scratch Autocomplete.md').catch(() => 'ERR')`
     )
     check('typing reaches the editor', String(raw).includes(typed), JSON.stringify(raw))
     check('autocomplete tooltip opens', state.tooltips > 0, `${state.tooltips} tooltips`)
@@ -155,13 +155,13 @@ ws.onopen = async () => {
       await sleep(900)
 
       const after = await evaluate(
-        `window.slate.file.read('Scratch Autocomplete.md').catch(() => 'ERR')`
+        `window.spindle.file.read('Scratch Autocomplete.md').catch(() => 'ERR')`
       )
       check('accepting a completion inserts a wikilink', /\[\[[^\]]+\]\]/.test(String(after)), JSON.stringify(after))
     }
 
     // Remove the scratch note, so the sample vault is left as it was found.
-    await evaluate(`window.slate.file.remove('Scratch Autocomplete.md').catch(() => {})`)
+    await evaluate(`window.spindle.file.remove('Scratch Autocomplete.md').catch(() => {})`)
     await sleep(600)
 
     console.log(results.join('\n'))

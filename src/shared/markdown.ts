@@ -2,7 +2,7 @@
  * Markdown + wikilink parsing.
  *
  * Pure functions, no I/O, no DOM — this module is the single source of truth
- * for how Slate interprets a note's text and is unit tested directly.
+ * for how Spindle interprets a note's text and is unit tested directly.
  *
  * Supported Obsidian-compatible syntax:
  *   [[Note]]              wikilink

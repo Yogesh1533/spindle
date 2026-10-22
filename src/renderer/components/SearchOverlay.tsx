@@ -35,7 +35,7 @@ export function SearchOverlay() {
 
     setSearching(true)
     const timer = setTimeout(() => {
-      void window.slate.search
+      void window.spindle.search
         .query({ text: trimmed, limit: 100 })
         .then((found) => {
           setResults(found)

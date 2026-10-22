@@ -1,8 +1,8 @@
 /**
- * Vault: a folder of plain files. Slate treats it as read/write but never
+ * Vault: a folder of plain files. Spindle treats it as read/write but never
  * migrates or reformats it.
  *
- * Slate's own settings are kept outside the vault entirely, in the OS
+ * Spindle's own settings are kept outside the vault entirely, in the OS
  * user-data directory, so opening a vault never writes into it.
  */
 
@@ -140,7 +140,7 @@ export async function readFile(root: string, relative: string): Promise<string> 
 export async function writeFile(root: string, relative: string, content: string): Promise<void> {
   const abs = toAbsolute(root, relative)
   await fs.mkdir(path.dirname(abs), { recursive: true })
-  const tmp = `${abs}.slate-tmp-${process.pid}-${Date.now()}`
+  const tmp = `${abs}.spindle-tmp-${process.pid}-${Date.now()}`
   await fs.writeFile(tmp, content, 'utf8')
   try {
     await fs.rename(tmp, abs)

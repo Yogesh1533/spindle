@@ -5,7 +5,7 @@
  * Usage: node scripts/verify-panes.mjs <ws-url> [vault-path]
  */
 const wsUrl = process.argv[2]
-const VAULT = process.argv[3] ?? '/Users/yogesh/Documents/Slate Sample Vault'
+const VAULT = process.argv[3] ?? '/Users/yogesh/Documents/Spindle Sample Vault'
 
 if (!wsUrl) {
   console.error('Usage: node scripts/verify-panes.mjs <ws-url> [vault-path]')
@@ -76,7 +76,7 @@ const openNoteInSplit = (name) => `
 
 ws.onopen = async () => {
   try {
-    await evaluate(`window.slate.vault.open(${JSON.stringify(VAULT)})`)
+    await evaluate(`window.spindle.vault.open(${JSON.stringify(VAULT)})`)
     await sleep(2000)
 
     // ---- 1. A split pane opens ----
@@ -203,14 +203,14 @@ ws.onopen = async () => {
     // ---- 7. The theme toggles ----
     const themeBefore = await evaluate(`document.documentElement.dataset.theme`)
     await evaluate(`
-      window.dispatchEvent(new CustomEvent('slate:command', { detail: 'ui:toggle-theme' }))
+      window.dispatchEvent(new CustomEvent('spindle:command', { detail: 'ui:toggle-theme' }))
     `)
     await sleep(900)
     const themeAfter = await evaluate(`document.documentElement.dataset.theme`)
     check('the theme toggles', themeBefore !== themeAfter, `${themeBefore} → ${themeAfter}`)
 
     // Put everything back the way it was, so the next check starts clean.
-    await evaluate(`window.slate.settings.set({ theme: 'system' })`)
+    await evaluate(`window.spindle.settings.set({ theme: 'system' })`)
     await evaluate(`
       (() => {
         const btn = [...document.querySelectorAll('.ribbon__button')]

@@ -7,7 +7,7 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-WS="${1:-$(sed 's/^WS=//' /tmp/slate.ws)}"
+WS="${1:-$(sed 's/^WS=//' /tmp/spindle.ws)}"
 if [ -z "$WS" ]; then
   echo "no CDP target; start the app with scripts/restart-app.sh first" >&2
   exit 1

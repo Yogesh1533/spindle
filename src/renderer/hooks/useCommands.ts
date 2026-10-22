@@ -65,13 +65,13 @@ export function useCommands(ctx: CommandContext): void {
       // Cmd/Ctrl+N — new note
       if (key === 'n' && !event.shiftKey) {
         event.preventDefault()
-        window.dispatchEvent(new CustomEvent('slate:command', { detail: 'file:new-note' }))
+        window.dispatchEvent(new CustomEvent('spindle:command', { detail: 'file:new-note' }))
         return
       }
       // Cmd/Ctrl+Shift+N — new folder
       if (key === 'n' && event.shiftKey) {
         event.preventDefault()
-        window.dispatchEvent(new CustomEvent('slate:command', { detail: 'file:new-folder' }))
+        window.dispatchEvent(new CustomEvent('spindle:command', { detail: 'file:new-folder' }))
         return
       }
       // Cmd/Ctrl+E — toggle source / preview
@@ -96,14 +96,14 @@ export function useCommands(ctx: CommandContext): void {
       if (key === 'b' && !event.shiftKey) {
         event.preventDefault()
         const settings = state.settings
-        void window.slate.settings.set({ showFileExplorer: !settings.showFileExplorer })
+        void window.spindle.settings.set({ showFileExplorer: !settings.showFileExplorer })
         return
       }
       // Cmd/Ctrl+Shift+B — toggle right sidebar
       if (key === 'b' && event.shiftKey) {
         event.preventDefault()
         const settings = state.settings
-        void window.slate.settings.set({ showRightSidebar: !settings.showRightSidebar })
+        void window.spindle.settings.set({ showRightSidebar: !settings.showRightSidebar })
         return
       }
       // Cmd/Ctrl+S — save
@@ -126,11 +126,11 @@ export function useCommands(ctx: CommandContext): void {
     }
 
     window.addEventListener('keydown', onKeyDown)
-    window.addEventListener('slate:command', onMenuCommand)
+    window.addEventListener('spindle:command', onMenuCommand)
 
     return () => {
       window.removeEventListener('keydown', onKeyDown)
-      window.removeEventListener('slate:command', onMenuCommand)
+      window.removeEventListener('spindle:command', onMenuCommand)
     }
   }, [ctx])
 }
@@ -144,7 +144,7 @@ export async function saveActiveNote(): Promise<void> {
   const content = editor.contents[path]
   if (content === undefined) return
   editor.setSaving(path, true)
-  await window.slate.file.write(path, content)
+  await window.spindle.file.write(path, content)
   editor.setSaved(path, content)
   editor.setSaving(path, false)
 }
@@ -169,9 +169,9 @@ export async function runCommand(command: CommandId, ctx?: CommandContext): Prom
       await saveActiveNote()
       break
     case 'vault:open': {
-      const picked = await window.slate.vault.pickFolder()
+      const picked = await window.spindle.vault.pickFolder()
       if (!picked) return
-      const result = await window.slate.vault.open(picked)
+      const result = await window.spindle.vault.open(picked)
       if (!result.ok) notify(result.error ?? 'Could not open that folder.')
       break
     }
@@ -179,7 +179,7 @@ export async function runCommand(command: CommandId, ctx?: CommandContext): Prom
       state.toggleViewMode()
       break
     case 'editor:find':
-      window.dispatchEvent(new CustomEvent('slate:command', { detail: 'editor:find-in-file' }))
+      window.dispatchEvent(new CustomEvent('spindle:command', { detail: 'editor:find-in-file' }))
       break
     case 'ui:quick-switcher':
       state.setQuickSwitcherOpen(true)
@@ -195,18 +195,18 @@ export async function runCommand(command: CommandId, ctx?: CommandContext): Prom
       break
     case 'ui:toggle-file-explorer': {
       const settings = state.settings
-      await window.slate.settings.set({ showFileExplorer: !settings.showFileExplorer })
+      await window.spindle.settings.set({ showFileExplorer: !settings.showFileExplorer })
       break
     }
     case 'ui:toggle-right-sidebar': {
       const settings = state.settings
-      await window.slate.settings.set({ showRightSidebar: !settings.showRightSidebar })
+      await window.spindle.settings.set({ showRightSidebar: !settings.showRightSidebar })
       break
     }
     case 'ui:toggle-theme': {
       const settings = state.settings
       const next = settings.theme === 'dark' ? 'light' : 'dark'
-      await window.slate.settings.set({ theme: next })
+      await window.spindle.settings.set({ theme: next })
       break
     }
     case 'ui:settings':

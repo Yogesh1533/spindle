@@ -1,8 +1,8 @@
-import type { SlateApi } from '../electron/preload.js'
+import type { SpindleApi } from '../electron/preload.js'
 
 declare global {
   interface Window {
-    slate: SlateApi
+    spindle: SpindleApi
   }
 }
 

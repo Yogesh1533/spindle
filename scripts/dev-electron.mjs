@@ -85,7 +85,7 @@ async function main() {
   await buildMain()
   const ready = await waitForServer(DEV_SERVER_URL)
   if (!ready) {
-    console.error(`[slate] Vite dev server did not come up at ${DEV_SERVER_URL}`)
+    console.error(`[spindle] Vite dev server did not come up at ${DEV_SERVER_URL}`)
     process.exit(1)
   }
   startElectron()
@@ -94,7 +94,7 @@ async function main() {
   for (const dir of ['electron', 'src/shared']) {
     watch(path.join(projectRoot, dir), { recursive: true }, (_event, filename) => {
       if (filename && !filename.endsWith('.ts')) return
-      console.log(`[slate] ${dir} changed, restarting Electron…`)
+      console.log(`[spindle] ${dir} changed, restarting Electron…`)
       void restart()
     })
   }

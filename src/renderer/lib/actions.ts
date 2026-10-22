@@ -18,9 +18,9 @@ export async function createNewNote(
 
   const targetFolder = folder ?? activeFolder()
   const base = name ?? 'Untitled'
-  const rel = await window.slate.file.uniquePath(targetFolder, base)
+  const rel = await window.spindle.file.uniquePath(targetFolder, base)
 
-  await window.slate.file.createNote(rel, '')
+  await window.spindle.file.createNote(rel, '')
   state.openTab(rel)
   state.setRenamingPath(rel)
   return rel
@@ -31,8 +31,8 @@ export async function createNewFolder(name = 'New folder'): Promise<string | nul
   const state = useVaultStore.getState()
   if (!state.root) return null
   const rel = name
-  await window.slate.file.createFolder(rel)
-  const tree = await window.slate.vault.tree()
+  await window.spindle.file.createFolder(rel)
+  const tree = await window.spindle.vault.tree()
   state.setTree(tree)
   return rel
 }
@@ -64,21 +64,21 @@ export async function openLinkTarget(
   // cursor.
   const { target: noteTarget, subpath } = splitTargetAlias(target)
 
-  const resolved = await window.slate.links.resolve(noteTarget, source)
+  const resolved = await window.spindle.links.resolve(noteTarget, source)
   if (resolved) {
     state.openTab(resolved)
     if (subpath) {
       // Give the editor a moment to open the note before scrolling to it.
       window.setTimeout(() => {
         window.dispatchEvent(
-          new CustomEvent('slate:goto-heading', { detail: `${resolved}#${subpath}` })
+          new CustomEvent('spindle:goto-heading', { detail: `${resolved}#${subpath}` })
         )
       }, 120)
     }
     return
   }
 
-  const result = await window.slate.links.createFromLink(noteTarget, source ?? '')
+  const result = await window.spindle.links.createFromLink(noteTarget, source ?? '')
   if (result?.path) {
     state.openTab(result.path)
   }
@@ -89,7 +89,7 @@ export async function openDailyNote(): Promise<void> {
   const state = useVaultStore.getState()
   if (!state.root) return
   try {
-    const result = await window.slate.daily.open()
+    const result = await window.spindle.daily.open()
     if (result?.path) {
       state.openTab(result.path)
     }
@@ -115,7 +115,7 @@ export async function loadNote(path: string): Promise<string> {
 
   let content: string
   try {
-    content = await window.slate.file.read(path)
+    content = await window.spindle.file.read(path)
   } catch {
     // The file is gone; keep whatever we had rather than blanking the tab.
     return existing ?? ''
@@ -142,7 +142,7 @@ export async function saveNote(path: string): Promise<boolean> {
 
   editor.setSaving(path, true)
   try {
-    const result = await window.slate.file.write(path, content)
+    const result = await window.spindle.file.write(path, content)
     if (!result.success) return false
     editor.setSaved(path, content)
     return true
@@ -168,11 +168,11 @@ export async function saveAll(): Promise<void> {
 export async function renameNote(from: string, to: string): Promise<{ changed: number }> {
   const state = useVaultStore.getState()
 
-  await window.slate.links.updateOnRename(from, to)
-  await window.slate.file.rename(from, to)
+  await window.spindle.links.updateOnRename(from, to)
+  await window.spindle.file.rename(from, to)
 
   state.renameTab(from, to)
-  const tree = await window.slate.vault.tree()
+  const tree = await window.spindle.vault.tree()
   state.setTree(tree)
   return { changed: 0 }
 }
@@ -190,8 +190,8 @@ export async function deletePath(path: string): Promise<boolean> {
   )
   if (!confirmed) return false
 
-  await window.slate.file.remove(path)
-  const tree = await window.slate.vault.tree()
+  await window.spindle.file.remove(path)
+  const tree = await window.spindle.vault.tree()
   state.setTree(tree)
   return true
 }

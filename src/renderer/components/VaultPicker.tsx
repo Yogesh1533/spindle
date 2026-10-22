@@ -17,7 +17,7 @@ export function VaultPicker({ onOpenVault }: Props) {
     const trimmed = name.trim()
     if (!trimmed) return
     try {
-      const result = await window.slate.vault.create(trimmed)
+      const result = await window.spindle.vault.create(trimmed)
       if (!result.ok) {
         setError(result.error ?? 'Could not create that folder.')
       }
@@ -45,10 +45,10 @@ export function VaultPicker({ onOpenVault }: Props) {
         </div>
 
         <h1 className="empty__title" style={{ fontSize: 21 }}>
-          Slate
+          Spindle
         </h1>
         <p className="empty__body">
-          A local-first Markdown notebook. Open any folder of <code>.md</code> files — Slate
+          A local-first Markdown notebook. Open any folder of <code>.md</code> files — Spindle
           reads and writes them in place and never migrates your files.
         </p>
 

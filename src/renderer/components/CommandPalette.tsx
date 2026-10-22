@@ -123,7 +123,7 @@ export function CommandPalette() {
         run: async () => {
           const next = settings.theme === 'dark' ? 'light' : 'dark'
           setSettings({ theme: next })
-          await window.slate.settings.set({ theme: next })
+          await window.spindle.settings.set({ theme: next })
         },
       },
       {

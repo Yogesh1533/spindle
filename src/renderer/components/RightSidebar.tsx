@@ -327,7 +327,7 @@ function OutlinePane({ path }: { path: string }) {
             // Jump to the heading by opening the note and scrolling to it.
             useVaultStore.getState().openTab(path)
             window.dispatchEvent(
-              new CustomEvent('slate:goto-heading', { detail: heading.anchor })
+              new CustomEvent('spindle:goto-heading', { detail: heading.anchor })
             )
           }}
         >
@@ -361,7 +361,7 @@ function useEffectUnlinked(
   useEffect(() => {
     if (!enabled) return
     let cancelled = false
-    void window.slate.links
+    void window.spindle.links
       .unlinkedMentions(path)
       .then((result) => {
         if (!cancelled) set(result)

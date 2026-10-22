@@ -13,7 +13,7 @@ import { writeFile, rm } from 'node:fs/promises'
 import path from 'node:path'
 
 const wsUrl = process.argv[2]
-const VAULT = process.argv[3] ?? '/Users/yogesh/Documents/Slate Sample Vault'
+const VAULT = process.argv[3] ?? '/Users/yogesh/Documents/Spindle Sample Vault'
 
 if (!wsUrl) {
   console.error('Usage: node scripts/verify-watch.mjs <ws-url> [vault-path]')
@@ -65,7 +65,7 @@ const readTrees = `(() => {
       n.isFolder ? flat(n.children ?? [], prefix + n.name + '/') : [prefix + n.name]
     )
   return (async () => {
-    const api = flat(await window.slate.vault.tree(), '')
+    const api = flat(await window.spindle.vault.tree(), '')
     const dom = [...document.querySelectorAll('.tree__name')].map((e) => e.textContent)
     return { api, dom }
   })()
@@ -78,7 +78,7 @@ const check = (name, pass, detail) => {
 
 ws.onopen = async () => {
   try {
-    await evaluate(`window.slate.vault.open(${JSON.stringify(VAULT)})`)
+    await evaluate(`window.spindle.vault.open(${JSON.stringify(VAULT)})`)
     await sleep(2500)
 
     // ---- 1. A file created outside the app shows up ----

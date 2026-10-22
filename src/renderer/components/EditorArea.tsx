@@ -29,8 +29,8 @@ export function EditorArea() {
         setFindSignal((n) => n + 1)
       }
     }
-    window.addEventListener('slate:command', onCommand)
-    return () => window.removeEventListener('slate:command', onCommand)
+    window.addEventListener('spindle:command', onCommand)
+    return () => window.removeEventListener('spindle:command', onCommand)
   }, [])
 
   if (tabs.length === 0) {
